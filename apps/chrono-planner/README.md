@@ -1,3 +1,4 @@
+# Chrono Planner
 
 Chrono Planner 是 Chrono Desk 的獨立排程模組。它使用原生 JavaScript，不載入外部 CDN，資料保存在目前瀏覽器的本機儲存空間。
 
@@ -25,3 +26,8 @@ Chrono Planner 是 Chrono Desk 的獨立排程模組。它使用原生 JavaScrip
 ## 測試
 
 在此資料夾執行 `npm test`。核心排程、日期切分、重複行程與分析公式使用 Node 內建測試框架。
+
+
+## Chrono Desk 整合版
+
+若要保留原本 Chrono Desk 的工作台、BI 戰情室、公式中心與範本介面，同時使用匯入月曆，請開啟 [`ChronoDesk-整合版.html`](./ChronoDesk-整合版.html)。此版本支援 Chrono Desk 備份與 Chrono Planner v2 JSON；匯入後會跳到資料所在月份，BI 範圍也會跟著所選日期。該單檔透過 CDN 載入 Vue、ECharts 與其他介面套件，因此首次開啟需要網路。資料仍只存於目前瀏覽器。
