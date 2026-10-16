@@ -3,6 +3,7 @@
   const base = window.HealthKnowledgeData;
   const STORE_KEY = 'health-time-kb-custom-v1';
   const $ = (id) => document.getElementById(id);
+  function announce(message) { const formStatus=$('entryStatus'), pageStatus=$('kbNotice'); if(formStatus)formStatus.textContent=message; if(pageStatus)pageStatus.textContent=message; }
   const escapeHTML = (value) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const knownEvidence = ['指南／標準','研究指標','程式自訂','待查證','指南換算','標準測量','研究測量','個人化試算','研究／描述','資料比較','粗略估算','研究方法','生理估算','研究／估算','工程自訂','研究指標'];
   function readCustom() {
@@ -66,7 +67,7 @@
   }
   function persist() {
     try { localStorage.setItem(STORE_KEY,JSON.stringify(customItems)); return true; }
-    catch { $('entryStatus').textContent='瀏覽器無法保存；請先匯出本機條目。'; return false; }
+    catch { announce('瀏覽器無法保存；請先匯出本機條目。'); return false; }
   }
   function removeCustom(id) {
     customItems=customItems.filter(x=>x.customId!==id); persist(); refresh();
@@ -74,7 +75,7 @@
   function addCustom(item) {
     const id=`custom-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
     customItems.push({...item,id,customId:id}); persist(); refresh();
-    $('entryStatus').textContent='已加入本機知識庫。記得匯出 JSON 備份，否則清除瀏覽器資料會遺失。';
+    announce('已加入本機知識庫。記得匯出 JSON 備份，否則清除瀏覽器資料會遺失。');
   }
   function setActiveView(view) {
     document.querySelectorAll('.tab').forEach(button=>button.classList.toggle('active',button.dataset.view===view));
@@ -102,15 +103,15 @@
     const tst=tib-sol-waso-tfa,se=100*tst/tib,gap=Math.max(0,target*60-tst);
     $('sleepResult').innerHTML=`<b>估算總睡眠：${(tst/60).toFixed(2)} 小時</b><div class="kpi"><span>臥床時間：${(tib/60).toFixed(2)} 小時</span><span>睡眠效率 TST/TIB：${se.toFixed(1)}%</span><span>與個人目標差：${gap} 分鐘</span></div><small>睡眠日誌估算值；睡眠效率不能單獨診斷睡眠問題。</small>`;
   });
-  $('addEntryToggle').addEventListener('click',()=>{$('entryForm').classList.toggle('hidden'); $('entryStatus').textContent='';});
-  $('cancelEntry').addEventListener('click',()=>{$('entryForm').reset();$('entryForm').classList.add('hidden');$('entryStatus').textContent='';});
+  $('addEntryToggle').addEventListener('click',()=>{$('entryForm').classList.toggle('hidden'); announce('');});
+  $('cancelEntry').addEventListener('click',()=>{$('entryForm').reset();$('entryForm').classList.add('hidden');announce('');});
   $('entryForm').addEventListener('submit',(event)=>{
     event.preventDefault();
     const url=$('entrySource').value.trim();
-    if(url){try{if(!['http:','https:'].includes(new URL(url).protocol))throw Error();}catch{$('entryStatus').textContent='來源網址需使用 http 或 https。';return;}}
+    if(url){try{if(!['http:','https:'].includes(new URL(url).protocol))throw Error();}catch{announce('來源網址需使用 http 或 https。');return;}}
     const item={domain:$('entryDomain').value,evidence:$('entryType').value,category:$('entryCategory').value.trim(),name:$('entryName').value.trim(),equation:$('entryEquation').value.trim(),method:$('entryMethod').value.trim(),sourceUrls:url?[url]:[]};
     const candidate={...item,id:'custom-check'};
-    if(!validItem(candidate)){$('entryStatus').textContent='請填完整資料，並確認欄位長度。';return;}
+    if(!validItem(candidate)){announce('請填完整資料，並確認欄位長度。');return;}
     addCustom(item); $('entryForm').reset(); setActiveView(item.domain==='exercise'?'exercise':'rest'); $('entryForm').classList.add('hidden');
   });
   $('exportKnowledge').addEventListener('click',()=>{
@@ -127,8 +128,8 @@
       if(payload.items.length>500)throw Error('單次匯入最多 500 筆。');
       const invalid=payload.items.find(x=>!validItem(x)); if(invalid)throw Error('檔案中有格式錯誤或來源網址不安全的條目。');
       const map=new Map(customItems.map(x=>[x.id,x])); payload.items.forEach(x=>map.set(x.id,{...x,customId:x.id}));
-      customItems=[...map.values()]; persist(); refresh(); $('entryStatus').textContent=`匯入完成：讀取 ${payload.items.length} 筆，自訂知識目前共 ${customItems.length} 筆。`;
-    } catch(error) { $('entryStatus').textContent=`匯入失敗：${error.message}`; }
+      customItems=[...map.values()]; persist(); refresh(); announce(`匯入完成：讀取 ${payload.items.length} 筆，自訂知識目前共 ${customItems.length} 筆。`);
+    } catch(error) { announce(`匯入失敗：${error.message}`); }
     event.target.value='';
   });
   refresh();
