@@ -10,6 +10,7 @@ export const CATEGORIES = [
   { id: 'commute', label: '通勤／移動', color: '#7b8490' },
   { id: 'other', label: '其他', color: '#9b7653' }
 ];
+export const STORAGE_KEY = 'CHRONO_PLANNER_V2';
 export const TASK_STATUSES = [
   { id: 'todo', label: '未開始' }, { id: 'in_progress', label: '進行中' },
   { id: 'done', label: '已完成' }, { id: 'partial', label: '部分完成' },
@@ -59,7 +60,7 @@ export function normalizeEvent(input = {}) {
     estimatedMinutes: Number.isFinite(Number(input.estimatedMinutes)) ? Number(input.estimatedMinutes) : durationMinutes(start.slice(11, 16), end.slice(11, 16)),
     notes: String(input.notes || ''), seriesId: input.seriesId || null, recurrence: input.recurrence || null,
     externalUid: input.externalUid || null, source: input.source || 'local', importedAt: input.importedAt || null,
-    occurrenceDate: input.occurrenceDate || start.slice(0, 10), isFixed: Boolean(input.isFixed), createdAt: input.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString()
+    occurrenceDate: input.occurrenceDate || start.slice(0, 10), allDay: Boolean(input.allDay), isFixed: Boolean(input.isFixed), createdAt: input.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString()
   };
 }
 

@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
+import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { emptyState, normalizeEndDateTime, normalizeEvent } from '../src/model.js';
 import { createRecurringEvents, findConflicts, splitAcrossDates, suggestSlots } from '../src/scheduler.js';
 import { estimateError, summarizePeriod } from '../src/analytics.js';
-import { mergeImportBatch, parseCSV } from '../src/importer.js';
+import { mergeImportBatch, parseCSV, parseICS, previewImportEvents } from '../src/importer.js';
 
 const importFixture = JSON.parse(readFileSync(new URL('../sample-data/chrono-planner-test-data.json', import.meta.url), 'utf8'));
 
@@ -118,4 +119,22 @@ test('CSV export headings round-trip Chinese titles, categories, full dates, and
   assert.equal(event.end, '2026-10-21T07:00');
   assert.equal(event.status, 'done');
   assert.equal(event.notes, '第一行\n第二行,含逗號"與引號"');
+});
+
+test('import preview keeps malformed rows out of the merge and identifies the repair field', () => {
+  const preview = previewImportEvents([
+    { title: '有效活動', start: '2026-10-20T09:00', end: '2026-10-20T10:00' },
+    { title: '', start: '2026-10-20T09:00', end: '2026-10-20T10:00' },
+    { title: '無效跨日', start: '2026-10-20T23:00', end: '2026-10-20T00:30' }
+  ]);
+  assert.equal(preview[0].decision, 'add');
+  assert.deepEqual(preview[1].errors, [{ field: 'title', reason: '缺少活動名稱' }]);
+  assert.equal(preview[2].errors[0].field, 'end');
+});
+
+test('ICS handles UTC in Asia/Taipei and reports unsupported recurrence instead of silently changing it', () => {
+  const parsed = parseICS('BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:utc\r\nDTSTART:20261020T010000Z\r\nDTEND:20261020T020000Z\r\nSUMMARY:UTC 活動\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:repeat\r\nDTSTART;TZID=Asia/Taipei:20261020T090000\r\nDTEND;TZID=Asia/Taipei:20261020T100000\r\nRRULE:FREQ=WEEKLY\r\nSUMMARY:重複活動\r\nEND:VEVENT\r\nEND:VCALENDAR');
+  assert.equal(parsed.events[0].start, '2026-10-20T09:00');
+  assert.equal(parsed.events[0].end, '2026-10-20T10:00');
+  assert.deepEqual(parsed.issues, [{ row: 2, field: 'RRULE', reason: '尚未支援 ICS 重複規則，這筆資料未匯入' }]);
 });

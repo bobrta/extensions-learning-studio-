@@ -1,6 +1,12 @@
-# Chrono Desk｜時間與專案管理
+# Chrono Planner｜時間管理工具
 
-這是一個以單一 HTML 檔案運作的 Vue 3 時間與專案管理儀表板。介面包含任務工作台、BI 圖表、公式指標、JSON 備份、CSV／ICS 行事曆交換與範本。
+正式使用入口是 [`apps/chrono-planner/ChronoPlanner-可直接開啟.html`](apps/chrono-planner/ChronoPlanner-可直接開啟.html)。這個離線單檔不使用 CDN，可直接下載到 Mac 後以瀏覽器開啟。
+
+開發原始碼、資料模型、測試與匯入樣本位於 [`apps/chrono-planner/`](apps/chrono-planner/README.md)。執行該目錄中的 `npm test` 會先由同一份模組來源重建離線單檔，再執行核心測試。
+
+根目錄的舊 Chrono Desk 已不再是正式入口；`apps/chrono-planner/ChronoDesk-整合版.html` 只保留作相容性盤點材料。
+
+## 舊研究知識庫
 
 ## 研究知識庫（初步）
 

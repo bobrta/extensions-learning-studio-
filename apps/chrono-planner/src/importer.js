@@ -1,3 +1,81 @@
+import { CATEGORIES, normalizeActual, normalizeEndDateTime, normalizeEvent, uid } from './model.js';
+
+const DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+
+function isCalendarDateTime(value) {
+  if (!DATE_TIME.test(value || '')) return false;
+  const [date, time] = value.split('T');
+  const [year, month, day] = date.split('-').map(Number);
+  const [hour, minute] = time.split(':').map(Number);
+  const parsed = new Date(year, month - 1, day, hour, minute);
+  return parsed.getFullYear() === year && parsed.getMonth() === month - 1 && parsed.getDate() === day
+    && parsed.getHours() === hour && parsed.getMinutes() === minute;
+}
+
+export function validateImportEvent(input) {
+  const errors = [];
+  if (!String(input?.title || '').trim()) errors.push({ field: 'title', reason: '缺少活動名稱' });
+  if (!isCalendarDateTime(input?.start)) errors.push({ field: 'start', reason: '開始日期或時間格式無效' });
+  if (!isCalendarDateTime(input?.end)) errors.push({ field: 'end', reason: '結束日期或時間格式無效' });
+  if (!errors.length && new Date(input.end) <= new Date(input.start)) errors.push({ field: 'end', reason: '結束必須晚於開始；跨午夜請填寫隔天日期' });
+  return errors;
+}
+
+/** Prepare a non-mutating, reviewable import preview. Invalid rows are never normalized. */
+export function previewImportEvents(inputRows, existingEvents = []) {
+  return (Array.isArray(inputRows) ? inputRows : []).map((input, index) => {
+    const errors = validateImportEvent(input);
+    if (errors.length) return { index, input, event: null, errors, duplicate: null, decision: 'invalid' };
+    const event = normalizeImported(input);
+    const duplicate = findDuplicate(event, existingEvents);
+    return { index, input, event, errors: [], duplicate, decision: duplicate ? 'skip' : 'add' };
+  });
+}
+
+const taipeiFormatter = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+});
+
+function taipeiDateTime(date) {
+  const parts = Object.fromEntries(taipeiFormatter.formatToParts(date).filter(part => part.type !== 'literal').map(part => [part.type, part.value]));
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+}
+
+function parseIcsDateTime(value, parameters = '') {
+  const raw = String(value || '').trim();
+  const isAllDay = /^\d{8}$/.test(raw);
+  if (isAllDay) return { value: `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}T00:00`, allDay: true };
+  if (!/^\d{8}T\d{6}Z?$/.test(raw)) return { error: '日期時間格式不支援' };
+  const zone = parameters.match(/TZID=([^;:]+)/i)?.[1];
+  if (zone && zone !== 'Asia/Taipei') return { error: `不支援時區 ${zone}` };
+  if (raw.endsWith('Z')) return { value: taipeiDateTime(new Date(`${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}T${raw.slice(9, 11)}:${raw.slice(11, 13)}:${raw.slice(13, 15)}Z`)), allDay: false };
+  return { value: `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}T${raw.slice(9, 11)}:${raw.slice(11, 13)}`, allDay: false };
+}
+
+/** Parse only the documented ICS subset. Unsupported recurrence and time zones remain visible as issues. */
+export function parseICS(text) {
+  const blocks = String(text || '').replace(/\r?\n[ \t]/g, '').match(/BEGIN:VEVENT[\s\S]*?END:VEVENT/g) || [];
+  const events = [], issues = [];
+  const unescape = value => String(value || '').replace(/\\n/gi, '\n').replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\\\/g, '\\');
+  blocks.forEach((block, index) => {
+    const fields = {};
+    for (const line of block.split(/\r?\n/)) {
+      const separator = line.indexOf(':');
+      if (separator < 0) continue;
+      const name = line.slice(0, separator), key = name.split(';')[0].toUpperCase();
+      fields[key] = { value: line.slice(separator + 1), parameters: name.slice(key.length) };
+    }
+    if (fields.RRULE) { issues.push({ row: index + 1, field: 'RRULE', reason: '尚未支援 ICS 重複規則，這筆資料未匯入' }); return; }
+    const start = parseIcsDateTime(fields.DTSTART?.value, fields.DTSTART?.parameters);
+    const end = parseIcsDateTime(fields.DTEND?.value, fields.DTEND?.parameters);
+    if (start.error) { issues.push({ row: index + 1, field: 'DTSTART', reason: start.error }); return; }
+    if (end.error) { issues.push({ row: index + 1, field: 'DTEND', reason: end.error }); return; }
+    if (!start.value || !end.value) { issues.push({ row: index + 1, field: '日期', reason: '缺少 DTSTART 或 DTEND' }); return; }
+    events.push({ title: unescape(fields.SUMMARY?.value || '匯入活動'), start: start.value, end: end.value,
+      notes: unescape(fields.DESCRIPTION?.value), externalUid: fields.UID?.value || null, allDay: start.allDay && end.allDay });
+  });
+  return { events, issues };
+}
 
 export function parseCSV(text) {
   const records = [];
@@ -58,7 +136,7 @@ export function findDuplicate(row, events) {
 export function normalizeImported(row) {
   const categoryInput = String(row.category || 'other').trim();
   const category = CATEGORIES.find(item => item.id === categoryInput || item.label === categoryInput)?.id || 'other';
-  return normalizeEvent({ ...row, category, source: row.source || 'imported' });
+  return normalizeEvent({ ...row, category, end: normalizeEndDateTime(row.start, row.end), source: row.source || 'imported' });
 }
 
 function uniqueId(preferred, collection, prefix) {

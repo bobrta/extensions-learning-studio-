@@ -1,10 +1,11 @@
+import {
   AWARENESS, CATEGORIES, STORAGE_KEY, TASK_STATUSES, TIME_FEEL, addDays, categoryColor, categoryLabel,
   dateRange, durationMinutes, emptyState, minutesOf, normalizeActual, normalizeEvent, parseDate, startOfWeek,
   timeOf, toISODate, uid, migrateLegacyState, normalizeEndDateTime
 } from './model.js';
 import { createRecurringEvents, findConflicts, getWeekDates, suggestSlots, splitAcrossDates } from './scheduler.js';
 import { estimateError, summarizeByCategory, summarizePeriod } from './analytics.js';
-import { findDuplicate, mergeImportBatch, normalizeImported, parseCSV } from './importer.js';
+import { mergeImportBatch, parseCSV, parseICS, previewImportEvents } from './importer.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -33,6 +34,7 @@ let undoStack = [];
 let toastTimer;
 let modalDraft = null;
 let pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] };
+let pendingImportIssues = [];
 
 function persist(label = '已自動保存') {
   try {
@@ -377,14 +379,16 @@ function openSuggestions(task) {
 }
 
 function openImportPreview(file, parsed) {
-  const rows = parsed.map(row => {
-    const duplicate = findDuplicate(row, state.events);
-    return { ...row, duplicate, decision: duplicate ? 'skip' : 'add' };
-  });
+  const rows = previewImportEvents(parsed, state.events);
+  const validRows = rows.filter(row => row.event);
+  const invalidRows = rows.filter(row => row.errors.length);
+  const dates = validRows.map(row => row.event.start.slice(0, 10)).sort();
+  const categories = CATEGORIES.map(category => ({ ...category, count: validRows.filter(row => row.event.category === category.id).length })).filter(category => category.count);
+  const allIssues = [...pendingImportIssues, ...invalidRows.flatMap(row => row.errors.map(error => ({ row: row.index + 1, field: error.field, reason: error.reason })) )];
   const extrasCount = pendingImportExtras.tasks.length + pendingImportExtras.actuals.length + pendingImportExtras.reviews.length + pendingImportExtras.goals.length;
-  $('#overlay-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal modal-wide" role="dialog" aria-modal="true"><div class="modal-header"><div><span class="eyebrow">匯入預覽 · ${escapeHTML(file.name)}</span><h2>${parsed.length} 筆行程${extrasCount ? `，另有 ${extrasCount} 筆待辦／實際紀錄／回顧／目標` : ''}，請檢查後確認</h2></div><button class="close-inspector" data-action="close-modal">×</button></div>${rows.length ? `<div class="import-table-wrap"><table class="import-table"><thead><tr><th>日期</th><th>活動</th><th>類別</th><th>重複檢查</th><th>處理</th></tr></thead><tbody>${rows.map((row, i) => `<tr><td>${escapeHTML(row.start?.slice(0,10) || '—')}</td><td>${escapeHTML(row.title)}</td><td>${categoryLabel(row.category)}</td><td>${row.duplicate ? `可能重複：${escapeHTML(row.duplicate.title)}` : '未發現'}</td><td><select class="import-decision" data-row="${i}"><option value="add" ${!row.duplicate ? 'selected' : ''}>新增</option><option value="skip" ${row.duplicate ? 'selected' : ''}>略過</option><option value="replace">覆蓋本機重複項</option></select></td></tr>`).join('')}</tbody></table></div>` : '<p class="helper-text">這份檔案沒有行程，會只匯入其他資料紀錄。</p>'}<div class="modal-actions"><button class="outline-button" data-action="close-modal">取消匯入</button><button class="primary-button" data-action="confirm-import">確認匯入</button></div></section></div>`;
-  $$('[data-row]').forEach(select => select.addEventListener('change', () => { rows[Number(select.dataset.row)].decision = select.value; }));
-  $('#overlay-root').dataset.importRows = JSON.stringify(rows);
+  $('#overlay-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal modal-wide" role="dialog" aria-modal="true"><div class="modal-header"><div><span class="eyebrow">匯入預覽 · ${escapeHTML(file.name)}</span><h2>${validRows.length} 筆有效行程${extrasCount ? `，另有 ${extrasCount} 筆待辦／實際紀錄／回顧／目標` : ''}</h2></div><button class="close-inspector" data-action="close-modal">×</button></div><p class="helper-text">格式：${escapeHTML(file.name.split('.').pop()?.toUpperCase() || '未知')}｜日期範圍：${dates.length ? `${dates[0]} 至 ${dates.at(-1)}` : '無有效行程'}｜有效 ${validRows.length}、重複 ${validRows.filter(row => row.duplicate).length}、異常 ${allIssues.length}</p>${categories.length ? `<p class="helper-text">${categories.map(category => `${category.label} ${category.count} 筆`).join('、')}</p>` : ''}${allIssues.length ? `<div class="import-errors"><b>不會匯入的異常項目</b>${allIssues.map(issue => `<p>第 ${issue.row} 筆：${issue.field}－${escapeHTML(issue.reason)}</p>`).join('')}</div>` : ''}${validRows.length ? `<div class="import-table-wrap"><table class="import-table"><thead><tr><th>日期</th><th>活動</th><th>類別</th><th>重複檢查</th><th>處理</th></tr></thead><tbody>${validRows.map((row, index) => `<tr><td>${escapeHTML(row.event.start.slice(0,10))}</td><td>${escapeHTML(row.event.title)}</td><td>${categoryLabel(row.event.category)}</td><td>${row.duplicate ? `可能重複：${escapeHTML(row.duplicate.title)}` : '未發現'}</td><td><select class="import-decision" data-row="${index}"><option value="add" ${row.decision === 'add' ? 'selected' : ''}>新增</option><option value="skip" ${row.decision === 'skip' ? 'selected' : ''}>略過</option><option value="replace">更新本機重複項</option></select></td></tr>`).join('')}</tbody></table></div>` : '<p class="helper-text">這份檔案沒有可匯入的有效行程。</p>'}<div class="modal-actions"><button class="outline-button" data-action="close-modal">取消匯入</button><button class="primary-button" data-action="confirm-import">確認匯入</button></div></section></div>`;
+  $$('[data-row]').forEach(select => select.addEventListener('change', () => { validRows[Number(select.dataset.row)].decision = select.value; }));
+  $('#overlay-root').dataset.importRows = JSON.stringify(validRows.map(row => ({ ...row.event, decision: row.decision })));
 }
 
 function download(filename, content, type) {
@@ -401,19 +405,14 @@ function exportCSV() {
 }
 function exportICS() {
   const esc = value => String(value || '').replaceAll('\\','\\\\').replaceAll(';','\\;').replaceAll(',','\\,').replaceAll('\n','\\n');
-  const stamp = value => value.replaceAll('-','').replaceAll(':','');
-  const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Chrono Desk//Chrono Planner//ZH-TW','CALSCALE:GREGORIAN'];
-  for (const event of state.events) lines.push('BEGIN:VEVENT',`UID:${event.externalUid || `${event.id}@chronodesk`}`,`DTSTART:${stamp(event.start)}`,`DTEND:${stamp(event.end)}`,`SUMMARY:${esc(event.title)}`,`DESCRIPTION:${esc(`${categoryLabel(event.category)} ${event.notes || ''}`)}`,'END:VEVENT');
+  const stamp = value => `${value.replaceAll('-','').replaceAll(':','')}00`;
+  const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Chrono Desk//Chrono Planner//ZH-TW','CALSCALE:GREGORIAN','X-WR-TIMEZONE:Asia/Taipei'];
+  for (const event of state.events) {
+    const start = event.allDay ? `DTSTART;VALUE=DATE:${event.start.slice(0, 10).replaceAll('-', '')}` : `DTSTART;TZID=Asia/Taipei:${stamp(event.start)}`;
+    const end = event.allDay ? `DTEND;VALUE=DATE:${event.end.slice(0, 10).replaceAll('-', '')}` : `DTEND;TZID=Asia/Taipei:${stamp(event.end)}`;
+    lines.push('BEGIN:VEVENT',`UID:${event.externalUid || `${event.id}@chronodesk`}`,start,end,`SUMMARY:${esc(event.title)}`,`DESCRIPTION:${esc(`${categoryLabel(event.category)} ${event.notes || ''}`)}`,'END:VEVENT');
+  }
   lines.push('END:VCALENDAR'); download(`chrono-planner-${localToday()}.ics`, lines.join('\r\n'), 'text/calendar;charset=utf-8'); notify('ICS 已下載');
-}
-
-function parseICS(text) {
-  const unfolded = text.replace(/\r?\n[ \t]/g, ''), blocks = unfolded.match(/BEGIN:VEVENT[\s\S]*?END:VEVENT/g) || [];
-  const unescape = value => value.replace(/\\n/gi,'\n').replace(/\\,/g,',').replace(/\\;/g,';').replace(/\\\\/g,'\\');
-  const dateValue = value => { const m = value.match(/(\d{4})(\d{2})(\d{2})T?(\d{2})?(\d{2})?/); return m ? `${m[1]}-${m[2]}-${m[3]}T${m[4] || '09'}:${m[5] || '00'}` : ''; };
-  return blocks.map(block => { const fields = {}; for (const line of block.split(/\r?\n/)) { const idx=line.indexOf(':'); if(idx<0)continue; const key=line.slice(0,idx).split(';')[0].toUpperCase(); if(['UID','DTSTART','DTEND','SUMMARY','DESCRIPTION'].includes(key))fields[key]=line.slice(idx+1); }
-    return normalizeImported({ title: unescape(fields.SUMMARY || '匯入活動'), start: dateValue(fields.DTSTART || ''), end: dateValue(fields.DTEND || ''), notes: unescape(fields.DESCRIPTION || ''), externalUid: fields.UID || null });
-  }).filter(row => row.start && row.end);
 }
 
 async function handleImportFile(file) {
@@ -423,28 +422,28 @@ async function handleImportFile(file) {
     const text = typeof file.text === 'function' ? await file.text() : await new Promise((resolve, reject) => {
       const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || '')); reader.onerror = () => reject(reader.error || new Error('檔案讀取失敗')); reader.readAsText(file);
     });
-    let parsed; pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] };
+    let parsed; pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] }; pendingImportIssues = [];
     const filename = file.name.toLowerCase();
     if (filename.endsWith('.json')) {
       const raw = JSON.parse(text);
       if (raw && typeof raw === 'object' && !Array.isArray(raw) && Array.isArray(raw.events)) {
-        parsed = raw.events.map(event => normalizeEvent(event));
+        parsed = raw.events;
         pendingImportExtras = {
           tasks: Array.isArray(raw.tasks) ? raw.tasks : [], actuals: Array.isArray(raw.actuals) ? raw.actuals : [],
           reviews: Array.isArray(raw.reviews) ? raw.reviews : [], goals: Array.isArray(raw.goals) ? raw.goals : []
         };
       }
       else if (raw && Array.isArray(raw.tasks)) { const migrated = migrateLegacyState(raw); parsed = migrated.events; pendingImportExtras = { tasks: migrated.tasks, actuals: migrated.actuals, reviews: migrated.reviews, goals: migrated.goals }; }
-      else if (Array.isArray(raw)) parsed = raw.map(row => normalizeEvent(row));
+      else if (Array.isArray(raw)) parsed = raw;
       else throw new Error('JSON 格式中找不到活動資料');
-    } else if (filename.endsWith('.ics')) parsed = parseICS(text);
+    } else if (filename.endsWith('.ics')) { const result = parseICS(text); parsed = result.events; pendingImportIssues = result.issues; }
     else if (filename.endsWith('.csv')) parsed = parseCSV(text);
     else throw new Error('目前只接受 JSON、CSV 或 ICS');
     if (!parsed.length && !pendingImportExtras.tasks.length && !pendingImportExtras.actuals.length && !pendingImportExtras.reviews.length && !pendingImportExtras.goals.length) throw new Error('檔案中沒有可匯入的資料');
     openImportPreview(file, parsed);
     if (status) status.textContent = `已讀取 ${file.name}，請檢查預覽後確認。`;
   } catch (error) {
-    pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] };
+    pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] }; pendingImportIssues = [];
     if (status) status.textContent = `匯入失敗：${error.message}`;
     notify(`匯入失敗：${error.message}`);
   }
@@ -457,7 +456,7 @@ function applyImport() {
   change(store => { summary = mergeImportBatch(store, decisions, pendingImportExtras); }, '匯入資料已保存');
   const total = summary.addedEvents + summary.replacedEvents + summary.addedTasks + summary.addedActuals + summary.addedReviews + summary.addedGoals;
   notify(`匯入完成：${total} 筆資料已新增或更新`);
-  pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] };
+  pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] }; pendingImportIssues = [];
   wrapper.innerHTML = '';
   const status = $('#import-status');
   if (status) status.textContent = total ? `匯入完成：新增／更新 ${total} 筆資料。` : '沒有新增資料；選擇的項目皆已略過或已存在。';

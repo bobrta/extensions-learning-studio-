@@ -48,7 +48,6 @@ body[data-theme="dark"]{--surface:#1d2939;--page:#111a27;--ink:#e7edf7;--line:#3
   <script>
 (()=>{
 // ---- src/model.js ----
-const STORAGE_KEY = 'CHRONO_PLANNER_V2';
 const CATEGORIES = [
   { id: 'sleep', label: '睡眠', color: '#6750a4' },
   { id: 'rest', label: '休息／恢復', color: '#5b8c85' },
@@ -61,6 +60,7 @@ const CATEGORIES = [
   { id: 'commute', label: '通勤／移動', color: '#7b8490' },
   { id: 'other', label: '其他', color: '#9b7653' }
 ];
+const STORAGE_KEY = 'CHRONO_PLANNER_V2';
 const TASK_STATUSES = [
   { id: 'todo', label: '未開始' }, { id: 'in_progress', label: '進行中' },
   { id: 'done', label: '已完成' }, { id: 'partial', label: '部分完成' },
@@ -110,7 +110,7 @@ function normalizeEvent(input = {}) {
     estimatedMinutes: Number.isFinite(Number(input.estimatedMinutes)) ? Number(input.estimatedMinutes) : durationMinutes(start.slice(11, 16), end.slice(11, 16)),
     notes: String(input.notes || ''), seriesId: input.seriesId || null, recurrence: input.recurrence || null,
     externalUid: input.externalUid || null, source: input.source || 'local', importedAt: input.importedAt || null,
-    occurrenceDate: input.occurrenceDate || start.slice(0, 10), isFixed: Boolean(input.isFixed), createdAt: input.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString()
+    occurrenceDate: input.occurrenceDate || start.slice(0, 10), allDay: Boolean(input.allDay), isFixed: Boolean(input.isFixed), createdAt: input.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString()
   };
 }
 
@@ -165,7 +165,6 @@ function mapLegacyCategory(item) {
   return 'work';
 }
 
-;
 // ---- src/scheduler.js ----
 function eventInterval(event) {
   const startDate = event.start.slice(0, 10), startMinute = minutesOf(event.start.slice(11, 16));
@@ -254,7 +253,6 @@ function slot(date, startMinute, duration) {
 
 function getWeekDates(date) { return dateRange(startOfWeek(date), 7); }
 
-;
 // ---- src/analytics.js ----
 function summarizeByCategory(events, actuals, startDate, endDate) {
   return CATEGORIES.map(category => {
@@ -291,8 +289,84 @@ function estimateError(events, actuals) {
 
 function getEventDuration(event) { return durationMinutes(event.start.slice(11, 16), event.end.slice(11, 16)); }
 
-;
 // ---- src/importer.js ----
+const DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+
+function isCalendarDateTime(value) {
+  if (!DATE_TIME.test(value || '')) return false;
+  const [date, time] = value.split('T');
+  const [year, month, day] = date.split('-').map(Number);
+  const [hour, minute] = time.split(':').map(Number);
+  const parsed = new Date(year, month - 1, day, hour, minute);
+  return parsed.getFullYear() === year && parsed.getMonth() === month - 1 && parsed.getDate() === day
+    && parsed.getHours() === hour && parsed.getMinutes() === minute;
+}
+
+function validateImportEvent(input) {
+  const errors = [];
+  if (!String(input?.title || '').trim()) errors.push({ field: 'title', reason: '缺少活動名稱' });
+  if (!isCalendarDateTime(input?.start)) errors.push({ field: 'start', reason: '開始日期或時間格式無效' });
+  if (!isCalendarDateTime(input?.end)) errors.push({ field: 'end', reason: '結束日期或時間格式無效' });
+  if (!errors.length && new Date(input.end) <= new Date(input.start)) errors.push({ field: 'end', reason: '結束必須晚於開始；跨午夜請填寫隔天日期' });
+  return errors;
+}
+
+/** Prepare a non-mutating, reviewable import preview. Invalid rows are never normalized. */
+function previewImportEvents(inputRows, existingEvents = []) {
+  return (Array.isArray(inputRows) ? inputRows : []).map((input, index) => {
+    const errors = validateImportEvent(input);
+    if (errors.length) return { index, input, event: null, errors, duplicate: null, decision: 'invalid' };
+    const event = normalizeImported(input);
+    const duplicate = findDuplicate(event, existingEvents);
+    return { index, input, event, errors: [], duplicate, decision: duplicate ? 'skip' : 'add' };
+  });
+}
+
+const taipeiFormatter = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+});
+
+function taipeiDateTime(date) {
+  const parts = Object.fromEntries(taipeiFormatter.formatToParts(date).filter(part => part.type !== 'literal').map(part => [part.type, part.value]));
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+}
+
+function parseIcsDateTime(value, parameters = '') {
+  const raw = String(value || '').trim();
+  const isAllDay = /^\d{8}$/.test(raw);
+  if (isAllDay) return { value: `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}T00:00`, allDay: true };
+  if (!/^\d{8}T\d{6}Z?$/.test(raw)) return { error: '日期時間格式不支援' };
+  const zone = parameters.match(/TZID=([^;:]+)/i)?.[1];
+  if (zone && zone !== 'Asia/Taipei') return { error: `不支援時區 ${zone}` };
+  if (raw.endsWith('Z')) return { value: taipeiDateTime(new Date(`${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}T${raw.slice(9, 11)}:${raw.slice(11, 13)}:${raw.slice(13, 15)}Z`)), allDay: false };
+  return { value: `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}T${raw.slice(9, 11)}:${raw.slice(11, 13)}`, allDay: false };
+}
+
+/** Parse only the documented ICS subset. Unsupported recurrence and time zones remain visible as issues. */
+function parseICS(text) {
+  const blocks = String(text || '').replace(/\r?\n[ \t]/g, '').match(/BEGIN:VEVENT[\s\S]*?END:VEVENT/g) || [];
+  const events = [], issues = [];
+  const unescape = value => String(value || '').replace(/\\n/gi, '\n').replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\\\/g, '\\');
+  blocks.forEach((block, index) => {
+    const fields = {};
+    for (const line of block.split(/\r?\n/)) {
+      const separator = line.indexOf(':');
+      if (separator < 0) continue;
+      const name = line.slice(0, separator), key = name.split(';')[0].toUpperCase();
+      fields[key] = { value: line.slice(separator + 1), parameters: name.slice(key.length) };
+    }
+    if (fields.RRULE) { issues.push({ row: index + 1, field: 'RRULE', reason: '尚未支援 ICS 重複規則，這筆資料未匯入' }); return; }
+    const start = parseIcsDateTime(fields.DTSTART?.value, fields.DTSTART?.parameters);
+    const end = parseIcsDateTime(fields.DTEND?.value, fields.DTEND?.parameters);
+    if (start.error) { issues.push({ row: index + 1, field: 'DTSTART', reason: start.error }); return; }
+    if (end.error) { issues.push({ row: index + 1, field: 'DTEND', reason: end.error }); return; }
+    if (!start.value || !end.value) { issues.push({ row: index + 1, field: '日期', reason: '缺少 DTSTART 或 DTEND' }); return; }
+    events.push({ title: unescape(fields.SUMMARY?.value || '匯入活動'), start: start.value, end: end.value,
+      notes: unescape(fields.DESCRIPTION?.value), externalUid: fields.UID?.value || null, allDay: start.allDay && end.allDay });
+  });
+  return { events, issues };
+}
+
 function parseCSV(text) {
   const records = [];
   let record = [], cell = '', quoted = false;
@@ -352,7 +426,7 @@ function findDuplicate(row, events) {
 function normalizeImported(row) {
   const categoryInput = String(row.category || 'other').trim();
   const category = CATEGORIES.find(item => item.id === categoryInput || item.label === categoryInput)?.id || 'other';
-  return normalizeEvent({ ...row, category, source: row.source || 'imported' });
+  return normalizeEvent({ ...row, category, end: normalizeEndDateTime(row.start, row.end), source: row.source || 'imported' });
 }
 
 function uniqueId(preferred, collection, prefix) {
@@ -437,7 +511,6 @@ function mergeImportBatch(store, rows, extras = {}) {
   return { addedEvents, replacedEvents, addedTasks, addedActuals, addedReviews, addedGoals };
 }
 
-;
 // ---- src/app.js ----
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -466,6 +539,7 @@ let undoStack = [];
 let toastTimer;
 let modalDraft = null;
 let pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] };
+let pendingImportIssues = [];
 
 function persist(label = '已自動保存') {
   try {
@@ -810,14 +884,16 @@ function openSuggestions(task) {
 }
 
 function openImportPreview(file, parsed) {
-  const rows = parsed.map(row => {
-    const duplicate = findDuplicate(row, state.events);
-    return { ...row, duplicate, decision: duplicate ? 'skip' : 'add' };
-  });
+  const rows = previewImportEvents(parsed, state.events);
+  const validRows = rows.filter(row => row.event);
+  const invalidRows = rows.filter(row => row.errors.length);
+  const dates = validRows.map(row => row.event.start.slice(0, 10)).sort();
+  const categories = CATEGORIES.map(category => ({ ...category, count: validRows.filter(row => row.event.category === category.id).length })).filter(category => category.count);
+  const allIssues = [...pendingImportIssues, ...invalidRows.flatMap(row => row.errors.map(error => ({ row: row.index + 1, field: error.field, reason: error.reason })) )];
   const extrasCount = pendingImportExtras.tasks.length + pendingImportExtras.actuals.length + pendingImportExtras.reviews.length + pendingImportExtras.goals.length;
-  $('#overlay-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal modal-wide" role="dialog" aria-modal="true"><div class="modal-header"><div><span class="eyebrow">匯入預覽 · ${escapeHTML(file.name)}</span><h2>${parsed.length} 筆行程${extrasCount ? `，另有 ${extrasCount} 筆待辦／實際紀錄／回顧／目標` : ''}，請檢查後確認</h2></div><button class="close-inspector" data-action="close-modal">×</button></div>${rows.length ? `<div class="import-table-wrap"><table class="import-table"><thead><tr><th>日期</th><th>活動</th><th>類別</th><th>重複檢查</th><th>處理</th></tr></thead><tbody>${rows.map((row, i) => `<tr><td>${escapeHTML(row.start?.slice(0,10) || '—')}</td><td>${escapeHTML(row.title)}</td><td>${categoryLabel(row.category)}</td><td>${row.duplicate ? `可能重複：${escapeHTML(row.duplicate.title)}` : '未發現'}</td><td><select class="import-decision" data-row="${i}"><option value="add" ${!row.duplicate ? 'selected' : ''}>新增</option><option value="skip" ${row.duplicate ? 'selected' : ''}>略過</option><option value="replace">覆蓋本機重複項</option></select></td></tr>`).join('')}</tbody></table></div>` : '<p class="helper-text">這份檔案沒有行程，會只匯入其他資料紀錄。</p>'}<div class="modal-actions"><button class="outline-button" data-action="close-modal">取消匯入</button><button class="primary-button" data-action="confirm-import">確認匯入</button></div></section></div>`;
-  $$('[data-row]').forEach(select => select.addEventListener('change', () => { rows[Number(select.dataset.row)].decision = select.value; }));
-  $('#overlay-root').dataset.importRows = JSON.stringify(rows);
+  $('#overlay-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal modal-wide" role="dialog" aria-modal="true"><div class="modal-header"><div><span class="eyebrow">匯入預覽 · ${escapeHTML(file.name)}</span><h2>${validRows.length} 筆有效行程${extrasCount ? `，另有 ${extrasCount} 筆待辦／實際紀錄／回顧／目標` : ''}</h2></div><button class="close-inspector" data-action="close-modal">×</button></div><p class="helper-text">格式：${escapeHTML(file.name.split('.').pop()?.toUpperCase() || '未知')}｜日期範圍：${dates.length ? `${dates[0]} 至 ${dates.at(-1)}` : '無有效行程'}｜有效 ${validRows.length}、重複 ${validRows.filter(row => row.duplicate).length}、異常 ${allIssues.length}</p>${categories.length ? `<p class="helper-text">${categories.map(category => `${category.label} ${category.count} 筆`).join('、')}</p>` : ''}${allIssues.length ? `<div class="import-errors"><b>不會匯入的異常項目</b>${allIssues.map(issue => `<p>第 ${issue.row} 筆：${issue.field}－${escapeHTML(issue.reason)}</p>`).join('')}</div>` : ''}${validRows.length ? `<div class="import-table-wrap"><table class="import-table"><thead><tr><th>日期</th><th>活動</th><th>類別</th><th>重複檢查</th><th>處理</th></tr></thead><tbody>${validRows.map((row, index) => `<tr><td>${escapeHTML(row.event.start.slice(0,10))}</td><td>${escapeHTML(row.event.title)}</td><td>${categoryLabel(row.event.category)}</td><td>${row.duplicate ? `可能重複：${escapeHTML(row.duplicate.title)}` : '未發現'}</td><td><select class="import-decision" data-row="${index}"><option value="add" ${row.decision === 'add' ? 'selected' : ''}>新增</option><option value="skip" ${row.decision === 'skip' ? 'selected' : ''}>略過</option><option value="replace">更新本機重複項</option></select></td></tr>`).join('')}</tbody></table></div>` : '<p class="helper-text">這份檔案沒有可匯入的有效行程。</p>'}<div class="modal-actions"><button class="outline-button" data-action="close-modal">取消匯入</button><button class="primary-button" data-action="confirm-import">確認匯入</button></div></section></div>`;
+  $$('[data-row]').forEach(select => select.addEventListener('change', () => { validRows[Number(select.dataset.row)].decision = select.value; }));
+  $('#overlay-root').dataset.importRows = JSON.stringify(validRows.map(row => ({ ...row.event, decision: row.decision })));
 }
 
 function download(filename, content, type) {
@@ -834,19 +910,14 @@ function exportCSV() {
 }
 function exportICS() {
   const esc = value => String(value || '').replaceAll('\\','\\\\').replaceAll(';','\\;').replaceAll(',','\\,').replaceAll('\n','\\n');
-  const stamp = value => value.replaceAll('-','').replaceAll(':','');
-  const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Chrono Desk//Chrono Planner//ZH-TW','CALSCALE:GREGORIAN'];
-  for (const event of state.events) lines.push('BEGIN:VEVENT',`UID:${event.externalUid || `${event.id}@chronodesk`}`,`DTSTART:${stamp(event.start)}`,`DTEND:${stamp(event.end)}`,`SUMMARY:${esc(event.title)}`,`DESCRIPTION:${esc(`${categoryLabel(event.category)} ${event.notes || ''}`)}`,'END:VEVENT');
+  const stamp = value => `${value.replaceAll('-','').replaceAll(':','')}00`;
+  const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Chrono Desk//Chrono Planner//ZH-TW','CALSCALE:GREGORIAN','X-WR-TIMEZONE:Asia/Taipei'];
+  for (const event of state.events) {
+    const start = event.allDay ? `DTSTART;VALUE=DATE:${event.start.slice(0, 10).replaceAll('-', '')}` : `DTSTART;TZID=Asia/Taipei:${stamp(event.start)}`;
+    const end = event.allDay ? `DTEND;VALUE=DATE:${event.end.slice(0, 10).replaceAll('-', '')}` : `DTEND;TZID=Asia/Taipei:${stamp(event.end)}`;
+    lines.push('BEGIN:VEVENT',`UID:${event.externalUid || `${event.id}@chronodesk`}`,start,end,`SUMMARY:${esc(event.title)}`,`DESCRIPTION:${esc(`${categoryLabel(event.category)} ${event.notes || ''}`)}`,'END:VEVENT');
+  }
   lines.push('END:VCALENDAR'); download(`chrono-planner-${localToday()}.ics`, lines.join('\r\n'), 'text/calendar;charset=utf-8'); notify('ICS 已下載');
-}
-
-function parseICS(text) {
-  const unfolded = text.replace(/\r?\n[ \t]/g, ''), blocks = unfolded.match(/BEGIN:VEVENT[\s\S]*?END:VEVENT/g) || [];
-  const unescape = value => value.replace(/\\n/gi,'\n').replace(/\\,/g,',').replace(/\\;/g,';').replace(/\\\\/g,'\\');
-  const dateValue = value => { const m = value.match(/(\d{4})(\d{2})(\d{2})T?(\d{2})?(\d{2})?/); return m ? `${m[1]}-${m[2]}-${m[3]}T${m[4] || '09'}:${m[5] || '00'}` : ''; };
-  return blocks.map(block => { const fields = {}; for (const line of block.split(/\r?\n/)) { const idx=line.indexOf(':'); if(idx<0)continue; const key=line.slice(0,idx).split(';')[0].toUpperCase(); if(['UID','DTSTART','DTEND','SUMMARY','DESCRIPTION'].includes(key))fields[key]=line.slice(idx+1); }
-    return normalizeImported({ title: unescape(fields.SUMMARY || '匯入活動'), start: dateValue(fields.DTSTART || ''), end: dateValue(fields.DTEND || ''), notes: unescape(fields.DESCRIPTION || ''), externalUid: fields.UID || null });
-  }).filter(row => row.start && row.end);
 }
 
 async function handleImportFile(file) {
@@ -856,28 +927,28 @@ async function handleImportFile(file) {
     const text = typeof file.text === 'function' ? await file.text() : await new Promise((resolve, reject) => {
       const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || '')); reader.onerror = () => reject(reader.error || new Error('檔案讀取失敗')); reader.readAsText(file);
     });
-    let parsed; pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] };
+    let parsed; pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] }; pendingImportIssues = [];
     const filename = file.name.toLowerCase();
     if (filename.endsWith('.json')) {
       const raw = JSON.parse(text);
       if (raw && typeof raw === 'object' && !Array.isArray(raw) && Array.isArray(raw.events)) {
-        parsed = raw.events.map(event => normalizeEvent(event));
+        parsed = raw.events;
         pendingImportExtras = {
           tasks: Array.isArray(raw.tasks) ? raw.tasks : [], actuals: Array.isArray(raw.actuals) ? raw.actuals : [],
           reviews: Array.isArray(raw.reviews) ? raw.reviews : [], goals: Array.isArray(raw.goals) ? raw.goals : []
         };
       }
       else if (raw && Array.isArray(raw.tasks)) { const migrated = migrateLegacyState(raw); parsed = migrated.events; pendingImportExtras = { tasks: migrated.tasks, actuals: migrated.actuals, reviews: migrated.reviews, goals: migrated.goals }; }
-      else if (Array.isArray(raw)) parsed = raw.map(row => normalizeEvent(row));
+      else if (Array.isArray(raw)) parsed = raw;
       else throw new Error('JSON 格式中找不到活動資料');
-    } else if (filename.endsWith('.ics')) parsed = parseICS(text);
+    } else if (filename.endsWith('.ics')) { const result = parseICS(text); parsed = result.events; pendingImportIssues = result.issues; }
     else if (filename.endsWith('.csv')) parsed = parseCSV(text);
     else throw new Error('目前只接受 JSON、CSV 或 ICS');
     if (!parsed.length && !pendingImportExtras.tasks.length && !pendingImportExtras.actuals.length && !pendingImportExtras.reviews.length && !pendingImportExtras.goals.length) throw new Error('檔案中沒有可匯入的資料');
     openImportPreview(file, parsed);
     if (status) status.textContent = `已讀取 ${file.name}，請檢查預覽後確認。`;
   } catch (error) {
-    pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] };
+    pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] }; pendingImportIssues = [];
     if (status) status.textContent = `匯入失敗：${error.message}`;
     notify(`匯入失敗：${error.message}`);
   }
@@ -890,7 +961,7 @@ function applyImport() {
   change(store => { summary = mergeImportBatch(store, decisions, pendingImportExtras); }, '匯入資料已保存');
   const total = summary.addedEvents + summary.replacedEvents + summary.addedTasks + summary.addedActuals + summary.addedReviews + summary.addedGoals;
   notify(`匯入完成：${total} 筆資料已新增或更新`);
-  pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] };
+  pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] }; pendingImportIssues = [];
   wrapper.innerHTML = '';
   const status = $('#import-status');
   if (status) status.textContent = total ? `匯入完成：新增／更新 ${total} 筆資料。` : '沒有新增資料；選擇的項目皆已略過或已存在。';
