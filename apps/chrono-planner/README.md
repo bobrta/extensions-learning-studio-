@@ -1,10 +1,11 @@
-# Chrono Planner
 
 Chrono Planner 是 Chrono Desk 的獨立排程模組。它使用原生 JavaScript，不載入外部 CDN，資料保存在目前瀏覽器的本機儲存空間。
 
 ## 開啟
 
 在此資料夾執行 `python3 -m http.server 8000`，再開啟 `http://localhost:8000`。GitHub Pages 可直接從本資料夾的 `index.html` 開啟。因為採用 JavaScript 模組，請透過 HTTP 伺服器開啟，不要直接用 `file://`。
+
+若要在電腦上直接開啟單一檔案，使用 `ChronoPlanner-可直接開啟.html`：下載後以瀏覽器開啟即可，不需要安裝伺服器或網路函式庫。資料仍保存在該瀏覽器的本機儲存空間；若換瀏覽器或清除網站資料，請先匯出 JSON 備份。
 
 ## 已實作
 

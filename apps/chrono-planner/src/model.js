@@ -1,4 +1,3 @@
-export const STORAGE_KEY = 'CHRONO_PLANNER_V2';
 export const CATEGORIES = [
   { id: 'sleep', label: '睡眠', color: '#6750a4' },
   { id: 'rest', label: '休息／恢復', color: '#5b8c85' },

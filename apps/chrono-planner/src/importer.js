@@ -1,4 +1,3 @@
-import { CATEGORIES, normalizeActual, normalizeEvent, uid } from './model.js';
 
 export function parseCSV(text) {
   const records = [];

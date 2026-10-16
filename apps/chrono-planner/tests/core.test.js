@@ -1,4 +1,3 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { emptyState, normalizeEndDateTime, normalizeEvent } from '../src/model.js';
