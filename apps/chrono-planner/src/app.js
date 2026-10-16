@@ -429,6 +429,8 @@ function applyImport() {
   notify(`匯入完成：${total} 筆資料已新增或更新`);
   pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] };
   wrapper.innerHTML = '';
+  const status = $('#import-status');
+  if (status) status.textContent = total ? `匯入完成：新增／更新 ${total} 筆資料。` : '沒有新增資料；選擇的項目皆已略過或已存在。';
 }
 
 function importLegacy() {
@@ -444,7 +446,7 @@ function attachGlobalHandlers() {
   document.addEventListener('click', event => {
     const target = event.target.closest('[data-action], [data-page], [data-view], [data-date], [data-id]');
     if (!target) return;
-    if (target.matches('[data-page]')) { currentPage = target.dataset.page; selectedEventId = null; render(); return; }
+    if (target.matches('[data-page]')) { currentPage = target.dataset.page; selectedEventId = null; $('#sidebar').classList.remove('open'); render(); return; }
     if (target.matches('[data-view]')) { viewMode = target.dataset.view; render(); return; }
     if (target.matches('[data-date]') && !target.dataset.action) { selectedDate = target.dataset.date; if (window.matchMedia('(max-width: 700px)').matches) viewMode = 'day'; render(); return; }
     const action = target.dataset.action, id = target.dataset.id;
@@ -452,7 +454,7 @@ function attachGlobalHandlers() {
     if (action === 'prev' || action === 'next') {
       const direction = action === 'prev' ? -1 : 1;
       if (viewMode === 'month') { const date = parseDate(selectedDate); date.setDate(1); date.setMonth(date.getMonth() + direction); selectedDate = toISODate(date); }
-      else selectedDate = addDays(selectedDate, (viewMode === 'day' ? 1 : 7) * direction);
+      else { const mobileSingleDay = window.matchMedia('(max-width: 540px)').matches && viewMode === 'week'; selectedDate = addDays(selectedDate, (viewMode === 'day' || mobileSingleDay ? 1 : 7) * direction); }
       render();
     }
     if (action === 'today') { selectedDate = localToday(); render(); }
