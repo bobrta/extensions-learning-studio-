@@ -14,6 +14,7 @@
 新增獨立的時間排程與回顧模組，含待辦與行程、週／日行事曆、計畫與實際記錄、重複行程、排程建議、分析、知識卡和資料匯入匯出。所有排程資料只存於目前瀏覽器的 localStorage，不會隨程式提交上傳。
 
 - [開啟 Chrono Planner](apps/chrono-planner/index.html)
+- [開啟保留原介面的 Chrono Desk 整合版](apps/chrono-planner/ChronoDesk-整合版.html)
 - [閱讀模組說明與測試方式](apps/chrono-planner/README.md)
 
 ## 開啟方式
