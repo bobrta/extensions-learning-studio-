@@ -1,0 +1,997 @@
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>Chrono Planner｜時間工作台</title>
+  <style>
+:root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;color:#202b3c;background:#f5f7fb;font-synthesis:none;--accent:#0a84ff;--accent-soft:#e9f4ff;--surface:#fff;--page:#f5f7fb;--line:#e6eaf0;--muted:#768397;--ink:#202b3c;--radius:16px;--sidebar:#172233;--shadow:none}
+*{box-sizing:border-box}body{margin:0;min-width:320px;background:var(--page);color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 35%,transparent);outline-offset:2px}body[data-palette="frost"]{--accent:#0a84ff;--accent-soft:#e9f4ff}body[data-palette="fluent"]{--accent:#0f6cbd;--accent-soft:#eaf3fb}body[data-palette="material"]{--accent:#6750a4;--accent-soft:#f1edfa}body[data-palette="oneui"]{--accent:#5c6bc0;--accent-soft:#eff0fb}body[data-palette="meta"]{--accent:#0866ff;--accent-soft:#eaf1ff}body[data-palette="chrono"]{--accent:#2563eb;--accent-soft:#eaf0ff}
+body[data-theme="dark"]{--surface:#1d2939;--page:#111a27;--ink:#e7edf7;--line:#344154;--muted:#a2afc0;--accent-soft:#273b57;--shadow:none;color-scheme:dark}body[data-theme="dark"] .sidebar{background:#0d1521}body[data-theme="dark"] .outline-button,body[data-theme="dark"] .icon-button,body[data-theme="dark"] .select-control,body[data-theme="dark"] .search-input,body[data-theme="dark"] .form-item input,body[data-theme="dark"] .form-item select,body[data-theme="dark"] .form-item textarea{background:#202d3f;color:var(--ink);border-color:var(--line)}body[data-theme="dark"] .task-card,body[data-theme="dark"] .rail-card,body[data-theme="dark"] .panel,body[data-theme="dark"] .inspector,body[data-theme="dark"] .topbar,body[data-theme="dark"] .metric-card,body[data-theme="dark"] .knowledge-card{background:var(--surface);border-color:var(--line)}body[data-theme="dark"] .calendar-area,body[data-theme="dark"] .calendar-scroll{background:#1a2636}body[data-theme="dark"] .hour-label,body[data-theme="dark"] .day-header{color:#aebacc}body[data-theme="dark"] .day-column,body[data-theme="dark"] .calendar-scroll{border-color:var(--line)}body[data-theme="dark"] .time-slot{border-color:#2a394c}body[data-theme="dark"] .inspector-section,body[data-theme="dark"] .task-card,body[data-theme="dark"] .setting-row,body[data-theme="dark"] .actual-list>div{border-color:var(--line)}body[data-theme="dark"] .month-day{background:#1a2636;border-color:var(--line)}body[data-theme="dark"] .month-day.outside{background:#172230;color:#6e7c90}body[data-theme="dark"] .modal{background:var(--surface);color:var(--ink)}
+.app-shell{min-height:100vh;display:flex}.sidebar{width:226px;flex:0 0 226px;background:var(--sidebar);color:#dce5f3;padding:22px 14px;display:flex;flex-direction:column;min-height:100vh}.brand{display:flex;align-items:center;gap:11px;padding:0 10px 29px;font-weight:700;line-height:1.1}.brand-mark{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(140deg,var(--accent),#68ccff);color:#fff;font-size:20px}.brand-text small{font-size:9px;letter-spacing:1.6px;color:#94a4ba}.nav-item{width:100%;display:flex;gap:12px;align-items:center;padding:11px 12px;border:0;border-radius:10px;color:#b2bfd0;background:transparent;text-align:left;font-size:12px;margin:3px 0}.nav-item span{width:20px;text-align:center;font-size:17px}.nav-item:hover,.nav-item.active{background:#27374e;color:#fff}.nav-item.active{box-shadow:inset 3px 0 var(--accent)}.sidebar-bottom{margin-top:auto;border-top:1px solid #344256;padding-top:14px}.save-state{display:block;padding:8px 10px;color:#a5b4c8;font-size:10px}.main-area{min-width:0;flex:1}.topbar{height:70px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:5}.topbar-title{display:flex;flex-direction:column;gap:3px}.topbar-title strong{font-size:16px}.eyebrow{font-size:10px;letter-spacing:.04em;color:var(--muted)}.topbar-actions{display:flex;align-items:center;gap:8px}.range-label{font-size:12px;min-width:92px;text-align:center}.icon-button,.outline-button,.primary-button,.danger-button,.text-button,.tiny-button{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--surface);color:var(--ink);font-size:11px;white-space:nowrap}.icon-button:hover,.outline-button:hover{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,var(--line))}.primary-button{background:var(--accent);color:white;border-color:var(--accent);font-weight:650}.primary-button:hover{filter:brightness(.95)}.danger-button{color:#b94a4a;border-color:#edcaca;background:#fff8f8}.text-button{border:0;padding:4px 0;background:transparent;color:var(--accent);font-weight:600}.tiny-button{padding:3px 8px;border-radius:7px}.mobile-menu{display:none}.page-content{padding:18px 20px 36px;max-width:1800px;margin:0 auto}.workbench-layout{display:grid;grid-template-columns:230px minmax(400px,1fr) 260px;gap:12px;align-items:start}.left-rail{display:flex;flex-direction:column;gap:10px}.rail-card,.panel,.inspector,.knowledge-card,.metric-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}.rail-card{padding:13px}.rail-heading{display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:9px}.count-pill,.status-chip,.sample-count{padding:4px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent);font-size:9px}.mini-month-label{font-size:10px;color:var(--muted);margin:3px 0 8px}.mini-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}.mini-weekday{height:21px;display:grid;place-items:center;font-size:9px;color:var(--muted)}.mini-day{height:27px;border:0;border-radius:50%;background:transparent;color:var(--ink);font-size:9px}.mini-day.outside{color:#b6bfcb}.mini-day.today{box-shadow:inset 0 0 0 1px var(--accent);color:var(--accent)}.mini-day.chosen{background:var(--accent);color:#fff}.task-list{display:flex;flex-direction:column;gap:4px}.task-card{display:flex;align-items:flex-start;gap:8px;padding:9px 6px;border-bottom:1px solid var(--line);border-radius:7px;cursor:grab}.task-card:last-child{border:0}.task-card:hover{background:var(--accent-soft)}.task-dot,.comparison-label i,.calendar-legend i{width:8px;height:8px;border-radius:50%;background:var(--category);flex:none;margin-top:4px}.task-main{min-width:0;flex:1}.task-main strong{display:block;font-size:10px;line-height:1.45}.task-main small{display:block;color:var(--muted);font-size:8px;margin-top:3px;line-height:1.5}.suggest-button{border:0;background:transparent;color:var(--muted);font-weight:bold}.review-reminder{background:linear-gradient(145deg,var(--surface),var(--accent-soft))}.review-reminder>strong,.timer-card>strong{font-size:11px;display:block;margin-top:6px}.review-reminder p,.timer-card p{font-size:9px;line-height:1.5;color:var(--muted)}.calendar-area{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}.calendar-toolbar{min-height:52px;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line)}.segmented{display:flex;padding:2px;background:var(--page);border-radius:9px}.segmented button{border:0;background:transparent;border-radius:7px;padding:6px 12px;color:var(--muted);font-size:10px}.segmented button.selected{background:var(--surface);color:var(--accent);box-shadow:0 1px 4px #16243b14}.calendar-filters{display:flex;gap:6px;min-width:0}.search-input,.select-control{min-width:0;border:1px solid var(--line);border-radius:9px;padding:7px 9px;background:var(--surface);color:var(--ink);font-size:10px}.search-input{width:150px}.calendar-scroll{max-height:calc(100vh - 190px);min-height:500px;overflow:auto;background:var(--surface)}.week-header,.time-grid-wrap{display:grid;grid-template-columns:48px minmax(0,1fr)}.week-header{position:sticky;top:0;z-index:3;background:var(--surface);border-bottom:1px solid var(--line)}.time-gutter{position:relative}.day-head-grid{display:grid;grid-template-columns:repeat(var(--day-count),minmax(80px,1fr));min-width:calc(var(--day-count)*80px)}.day-header{height:43px;background:transparent;border:0;border-left:1px solid var(--line);color:var(--muted);display:flex;align-items:center;justify-content:center;gap:7px;font-size:10px}.day-header span{width:23px;height:23px;border-radius:50%;display:grid;place-items:center}.day-header.today span,.day-header.selected-day span{background:var(--accent);color:white}.time-grid-wrap{min-width:calc(48px + var(--day-count, 1)*80px)}.hour-gutter{border-right:1px solid var(--line)}.hour-label{position:absolute;right:7px;transform:translateY(-50%);font-size:8px;color:#94a0b1}.day-columns{display:grid;grid-template-columns:repeat(var(--day-count),minmax(80px,1fr));min-width:calc(var(--day-count)*80px)}.day-column{position:relative;border-right:1px solid var(--line);background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(55.2px - 1px),var(--line) calc(55.2px - 1px),var(--line) 55.2px);overflow:hidden}.time-slot{position:absolute;left:0;right:0;width:100%;height:55.2px;border:0;border-top:1px solid transparent;background:transparent;z-index:0}.time-slot:hover{background:color-mix(in srgb,var(--accent) 6%,transparent)}.event-card{position:absolute;z-index:1;border:0;border-left:3px solid var(--category);border-radius:7px;background:color-mix(in srgb,var(--category) 13%,var(--surface));color:var(--ink);text-align:left;padding:5px 6px;overflow:hidden;display:flex;flex-direction:column;gap:2px;min-width:0}.event-card:hover,.event-card.selected{box-shadow:0 0 0 2px color-mix(in srgb,var(--category) 33%,transparent);z-index:2}.event-card.status-done{opacity:.68}.event-card.status-skipped{text-decoration:line-through;opacity:.55}.event-time{font-size:8px;color:var(--muted);white-space:nowrap}.event-card strong{font-size:9px;line-height:1.3;overflow:hidden;text-overflow:ellipsis}.event-card small{font-size:8px;color:var(--muted)}.day-column.drag-over{background-color:var(--accent-soft)}.calendar-legend{display:flex;gap:10px;flex-wrap:wrap;padding:9px 11px;border-top:1px solid var(--line);font-size:8px;color:var(--muted)}.calendar-legend span{display:flex;gap:4px;align-items:center}.calendar-legend i{width:7px;height:7px;margin:0}.legend-note{margin-left:auto}.inspector{padding:15px;min-height:250px;position:sticky;top:82px}.inspector-head{display:flex;justify-content:space-between;align-items:center}.close-inspector{border:0;background:transparent;font-size:21px;color:var(--muted);line-height:1}.inspector-color{height:4px;border-radius:5px;background:var(--category);margin:16px 0 11px}.inspector h2{font-size:15px;margin:0 0 8px}.inspector-meta{display:flex;flex-wrap:wrap;gap:6px}.inspector-meta span{font-size:8px;background:var(--page);border-radius:99px;padding:5px 7px;color:var(--muted)}.inspector-section{display:flex;align-items:center;justify-content:space-between;gap:9px;border-bottom:1px solid var(--line);padding:10px 0;font-size:9px;color:var(--muted)}.inspector-section strong{font-size:10px;color:var(--ink)}.inspector-section .select-control{max-width:125px}.inspector-notes{font-size:9px;line-height:1.6;color:var(--muted);white-space:pre-wrap}.inspector-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:13px}.inspector-actions button{font-size:9px;padding:7px 8px}.inspector-empty{text-align:center;padding:38px 10px}.inspector-icon{font-size:29px;color:var(--accent)}.inspector-empty strong{display:block;font-size:12px;margin-top:8px}.inspector-empty p{font-size:9px;color:var(--muted);line-height:1.6}.actual-list{margin-top:14px;font-size:9px}.actual-list>div{padding:8px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:3px}.actual-list small{color:var(--muted)}.empty{text-align:center;padding:22px 10px;color:var(--muted);font-size:10px;line-height:1.65}.empty.compact{padding:10px 2px}.month-grid{padding:7px}.month-weekdays,.month-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}.month-weekdays span{text-align:center;padding:8px;font-size:9px;color:var(--muted)}.month-day{min-height:82px;border:1px solid var(--line);background:var(--surface);text-align:left;padding:5px;overflow:hidden}.month-day b{font-size:9px}.month-day.outside{background:var(--page);color:#a9b3c2}.month-day.today b,.month-day.selected-day b{color:var(--accent)}.month-event{display:block;border-left:2px solid var(--category);font-size:8px;padding:2px 3px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.page-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin:3px 0 17px}.page-heading h1{font-size:23px;margin:5px 0}.page-heading p{font-size:10px;color:var(--muted);margin:0}.toolbar-group{display:flex;gap:6px}.stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}.metric-card{padding:14px}.metric-card span,.metric-card small{display:block;color:var(--muted);font-size:9px}.metric-card strong{display:block;font-size:21px;margin:8px 0 4px}.panel{padding:16px;margin-bottom:12px}.panel-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px}.panel-heading h2{font-size:13px;margin:0}.panel-heading p{color:var(--muted);font-size:9px;margin:5px 0 0}.comparison-list{display:flex;flex-direction:column;gap:12px}.comparison-row{display:grid;grid-template-columns:130px minmax(0,1fr);gap:12px;align-items:center}.comparison-label{display:flex;align-items:center;gap:7px;font-size:9px}.comparison-label i{margin:0}.dual-bars{display:flex;flex-direction:column;gap:5px}.bar-line{display:grid;grid-template-columns:38px minmax(0,1fr) 54px;gap:7px;align-items:center;font-size:8px;color:var(--muted)}.bar-line b{text-align:right;color:var(--ink);font-weight:500}.bar-track{height:8px;border-radius:99px;background:var(--page);overflow:hidden}.bar-track i{display:block;height:100%;border-radius:99px}.planned-bar{opacity:.35;background:var(--category);border:1px solid var(--category)}.actual-bar{background:var(--category)}.two-column-panels{display:grid;grid-template-columns:1fr 1fr;gap:18px}.mini-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.mini-metrics>div{background:var(--page);border:1px solid var(--line);border-radius:11px;padding:12px}.mini-metrics span{display:block;color:var(--muted);font-size:8px}.mini-metrics b{display:block;font-size:13px;margin-top:7px}.review-quote{padding:8px 0;border-bottom:1px solid var(--line);font-size:9px;line-height:1.5}.review-quote b{margin-right:8px}.knowledge-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.knowledge-card{padding:15px}.knowledge-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.knowledge-card h2{font-size:14px;margin:13px 0 7px}.knowledge-card p{font-size:9px;line-height:1.65;color:var(--muted)}.formula-box{display:flex;flex-direction:column;gap:6px;padding:10px;border-radius:9px;background:var(--page);font-size:9px}.formula-box code{font-family:ui-monospace,SFMono-Regular,monospace;color:var(--accent);white-space:normal;line-height:1.5}.knowledge-card .caution{margin-bottom:0}.evidence-note{display:flex;gap:12px;padding:13px 15px;margin-top:12px;border-radius:12px;background:var(--accent-soft);font-size:9px;line-height:1.6}.evidence-note b{white-space:nowrap;color:var(--accent)}.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.action-stack{display:flex;flex-direction:column;align-items:stretch;gap:7px}.action-stack>*{text-align:center}.upload-button{border:1px dashed color-mix(in srgb,var(--accent) 50%,var(--line));border-radius:10px;padding:10px;color:var(--accent);font-size:10px;cursor:pointer;background:var(--surface)}.upload-button:hover{background:var(--accent-soft)}.visually-hidden-file-input{position:fixed;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.helper-text{color:var(--muted);font-size:9px;line-height:1.6}.setting-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:9px}.setting-row:last-of-type{border:0}.setting-row .select-control,.setting-row input{max-width:150px}.setting-row input{width:110px;border:1px solid var(--line);border-radius:9px;padding:7px;background:var(--surface);color:var(--ink)}
+.modal-backdrop{position:fixed;inset:0;z-index:20;background:#11182780;display:grid;place-items:center;padding:16px}.modal{width:min(620px,100%);max-height:min(90vh,900px);overflow:auto;padding:20px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 60px #10182840}.modal-wide{width:min(900px,100%)}.modal-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}.modal h2{font-size:17px;margin:5px 0 0}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.form-item{display:flex;flex-direction:column;gap:5px;font-size:9px;color:var(--muted)}.form-item.full{grid-column:1/-1}.form-item input,.form-item select,.form-item textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:var(--surface);color:var(--ink);font-size:10px}.form-item textarea{resize:vertical}.modal-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:16px}.hidden{display:none!important}.suggestion-list{display:flex;flex-direction:column;gap:7px;margin-top:12px}.suggestion-option{display:grid;grid-template-columns:72px 1fr auto;gap:9px;align-items:center;text-align:left;border:1px solid var(--line);border-radius:11px;background:var(--surface);padding:11px;font-size:9px;color:var(--ink)}.suggestion-option:hover{background:var(--accent-soft);border-color:var(--accent)}.suggestion-option small{color:var(--muted)}.import-table-wrap{max-height:48vh;overflow:auto;border:1px solid var(--line);border-radius:10px}.import-table{width:100%;border-collapse:collapse;font-size:9px}.import-table th,.import-table td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}.import-table th{position:sticky;top:0;background:var(--page)}.import-table td{max-width:200px;overflow:hidden;text-overflow:ellipsis}.import-decision{border:1px solid var(--line);border-radius:7px;padding:6px;background:var(--surface);color:var(--ink);font-size:9px}.toast{position:fixed;right:18px;bottom:18px;z-index:30;max-width:min(440px,calc(100vw - 36px));padding:11px 14px;border-radius:10px;background:#26374f;color:white;font-size:10px;opacity:0;transform:translateY(10px);transition:.2s;pointer-events:none}.toast.visible{opacity:1;transform:translateY(0)}
+@media(max-width:1250px){.workbench-layout{grid-template-columns:205px minmax(350px,1fr)}.inspector{grid-column:1/-1;position:relative;top:auto;min-height:0}.inspector-empty{padding:17px}.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:800px){.sidebar{position:fixed;z-index:15;inset:0 auto 0 0;width:230px;transform:translateX(-100%);transition:transform .2s}.sidebar.open{transform:translateX(0)}.mobile-menu{display:inline-block;border:0;background:transparent;font-size:16px;margin-right:8px;color:var(--ink)}.topbar{padding:0 12px;height:62px}.topbar-title{display:grid;grid-template-columns:auto 1fr;column-gap:7px}.topbar-title .eyebrow{grid-column:2}.topbar-title strong{grid-column:2}.mobile-menu{grid-row:1/3;grid-column:1}.topbar-actions{gap:4px}.topbar-actions .icon-button{padding:7px}.topbar-actions .primary-button{font-size:9px;padding:8px}.range-label{display:none}.page-content{padding:12px}.workbench-layout{display:flex;flex-direction:column}.left-rail{width:100%;display:grid;grid-template-columns:1fr 1.4fr}.left-rail .review-reminder,.left-rail .timer-card{display:none}.calendar-area{width:100%}.inspector{width:100%;position:relative;top:auto}.calendar-scroll{max-height:calc(100vh - 260px);min-height:440px}.day-head-grid,.day-columns{grid-template-columns:repeat(var(--day-count),minmax(72px,1fr))}.day-head-grid{min-width:calc(var(--day-count)*72px)}.day-columns{min-width:calc(var(--day-count)*72px)}.calendar-filters .search-input{width:120px}.calendar-filters .select-control{max-width:96px}.two-column-panels,.data-grid{grid-template-columns:1fr}.knowledge-grid{grid-template-columns:1fr}.comparison-row{grid-template-columns:95px minmax(0,1fr)}}
+@media(max-width:540px){.left-rail{grid-template-columns:1fr}.mini-calendar{display:none}.calendar-toolbar{align-items:flex-start;flex-direction:column}.calendar-filters{width:100%}.calendar-filters .search-input{flex:1;width:auto}.calendar-scroll{max-height:calc(100vh - 275px);min-height:460px}.day-head-grid,.day-columns{grid-template-columns:minmax(100%,1fr);min-width:100%}.week-header{grid-template-columns:45px minmax(0,1fr)}.day-head-grid{min-width:100%}.day-head-grid .day-header:not(.selected-day){display:none}.day-columns .day-column:not(:first-child){display:none}.time-grid-wrap{grid-template-columns:45px minmax(0,1fr);min-width:100%}.hour-gutter{width:45px}.month-day{min-height:64px;padding:3px}.month-event{font-size:7px}.stat-grid{gap:7px}.metric-card{padding:11px}.metric-card strong{font-size:18px}.comparison-row{grid-template-columns:1fr;gap:4px}.two-column-panels{gap:10px}.form-grid{grid-template-columns:1fr}.form-item.full{grid-column:auto}.modal{padding:16px}.suggestion-option{grid-template-columns:62px 1fr}.suggestion-option small{grid-column:2}.page-heading{align-items:flex-start;flex-direction:column}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+/* Imported calendar month view */
+.import-calendar-layout{display:grid;grid-template-columns:220px minmax(500px,1fr) 250px;gap:12px;align-items:start}.import-calendar-rail{display:flex;flex-direction:column;gap:10px}.imported-sources{padding:13px}.source-calendar-row,.source-category-row{display:flex;align-items:center;gap:8px;padding:8px 2px;font-size:10px;border-bottom:1px solid var(--line)}.source-calendar-row i,.source-category-row i,.import-calendar-foot i{width:11px;height:11px;border-radius:3px;background:var(--accent);flex:none}.source-category-row i{background:var(--category)}.source-calendar-row span,.source-category-row span{flex:1}.source-calendar-row b,.source-category-row b{font-size:9px;color:var(--muted)}.imported-sources .text-button{margin-top:10px}.import-calendar-area{min-width:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);overflow:hidden}.import-calendar-toolbar{min-height:76px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line)}.import-calendar-toolbar h1{font-size:18px;margin:4px 0 0}.import-calendar-toolbar .calendar-filters{align-items:center}.import-month-grid{padding:0 8px 8px}.import-month-weekdays,.import-month-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}.import-month-weekdays{position:sticky;top:70px;z-index:2;background:var(--surface)}.import-month-weekdays span{text-align:center;padding:10px 4px;font-size:10px;color:var(--muted)}.import-month-day{min-width:0;height:clamp(96px,14vh,150px);border:1px solid var(--line);margin:-1px 0 0 -1px;background:var(--surface);overflow:hidden}.import-month-day.outside{background:var(--page);color:#98a3b2}.import-month-day.today .import-day-number{background:var(--accent);color:#fff}.import-month-day.chosen{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--accent) 55%,transparent)}.import-day-number{display:grid;place-items:center;width:25px;height:25px;margin:3px 0 2px 4px;border:0;border-radius:50%;background:transparent;color:var(--ink);font-size:10px}.import-day-events{display:flex;flex-direction:column;gap:2px;padding:0 3px}.import-month-event{display:flex;align-items:center;gap:4px;width:100%;min-width:0;border:0;border-left:3px solid var(--category);border-radius:4px;background:color-mix(in srgb,var(--category) 14%,var(--surface));color:var(--ink);padding:3px 4px;text-align:left;font-size:9px}.import-month-event:hover,.import-month-event.selected{background:color-mix(in srgb,var(--category) 25%,var(--surface));box-shadow:0 0 0 1px color-mix(in srgb,var(--category) 45%,transparent)}.import-month-event span{flex:none;font-size:8px;color:var(--muted)}.import-month-event b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:550}.import-more{font-size:8px;color:var(--muted);padding:1px 4px}.import-calendar-foot{display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding:10px 13px;font-size:9px;color:var(--muted)}.import-calendar-foot span:first-child{display:flex;align-items:center;gap:6px}.import-calendar-foot i{width:8px;height:8px}.import-inspector{position:sticky;top:82px}
+@media(max-width:1100px){.import-calendar-layout{grid-template-columns:190px minmax(400px,1fr)}.import-inspector{grid-column:1/-1;position:relative;top:auto}.import-inspector .inspector-empty{padding:18px}.import-month-day{height:110px}}
+@media(max-width:800px){.import-calendar-layout{display:flex;flex-direction:column}.import-calendar-rail{width:100%;display:grid;grid-template-columns:1fr 1fr}.import-calendar-area{width:100%}.import-inspector{width:100%}.import-calendar-toolbar{align-items:flex-start;flex-direction:column}.import-month-day{height:100px}.import-month-event{font-size:8px}.import-month-event span{display:none}}
+@media(max-width:540px){.import-calendar-rail{grid-template-columns:1fr}.import-calendar-rail .mini-calendar{display:none}.import-calendar-toolbar .calendar-filters{width:100%}.import-calendar-toolbar .calendar-filters .select-control{flex:1}.import-month-grid{padding:0 3px 4px}.import-month-day{height:78px}.import-day-number{width:22px;height:22px;font-size:9px}.import-day-events{padding:0 2px}.import-month-event{padding:3px 2px;border-left-width:2px}.import-month-event b{font-size:7px}.import-more{font-size:7px}.import-calendar-foot{font-size:8px}}
+
+</style>
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><span class="brand-mark">◷</span><span class="brand-text">Chrono<br><small>PLANNER</small></span></div>
+      <button class="nav-item active" data-page="workbench"><span>▦</span><b>排程工作台</b></button>
+      <button class="nav-item" data-page="import-calendar"><span>▦</span><b>匯入日曆</b></button>
+      <button class="nav-item" data-page="analytics"><span>▤</span><b>分析與回顧</b></button>
+      <button class="nav-item" data-page="knowledge"><span>⌕</span><b>公式與知識庫</b></button>
+      <button class="nav-item" data-page="data"><span>⇅</span><b>匯入與設定</b></button>
+      <div class="sidebar-bottom"><span class="save-state" id="save-state">本機資料已準備</span><button class="nav-item" data-action="undo" title="復原上一個操作"><span>↶</span><b>復原</b></button></div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="topbar-title"><button class="mobile-menu" id="mobile-menu" aria-label="開啟導覽">☰</button><span class="eyebrow">個人時間管理</span><strong id="page-title">排程工作台</strong></div>
+        <div class="topbar-actions"><button class="icon-button" data-action="today">今天</button><button class="icon-button" data-action="prev" aria-label="上一個期間">‹</button><button class="icon-button" data-action="next" aria-label="下一個期間">›</button><strong id="range-label" class="range-label"></strong><button class="primary-button" data-action="new-task">＋ 快速新增</button></div>
+      </header>
+      <div class="page-content" id="page-content"></div>
+    </main>
+    <div id="overlay-root"></div>
+    <div class="toast" id="toast" aria-live="polite"></div>
+  </div>
+  <script>
+(()=>{
+// ---- src/model.js ----
+const STORAGE_KEY = 'CHRONO_PLANNER_V2';
+const CATEGORIES = [
+  { id: 'sleep', label: '睡眠', color: '#6750a4' },
+  { id: 'rest', label: '休息／恢復', color: '#5b8c85' },
+  { id: 'exercise', label: '運動', color: '#2e8b57' },
+  { id: 'leisure', label: '玩樂／休閒', color: '#d17b36' },
+  { id: 'work', label: '工作／學習', color: '#0f6cbd' },
+  { id: 'review', label: '回饋／回顧', color: '#7a6db0' },
+  { id: 'admin', label: '整理／行政', color: '#758196' },
+  { id: 'social', label: '社交／生活照護', color: '#bf6681' },
+  { id: 'commute', label: '通勤／移動', color: '#7b8490' },
+  { id: 'other', label: '其他', color: '#9b7653' }
+];
+const TASK_STATUSES = [
+  { id: 'todo', label: '未開始' }, { id: 'in_progress', label: '進行中' },
+  { id: 'done', label: '已完成' }, { id: 'partial', label: '部分完成' },
+  { id: 'skipped', label: '取消／略過' }
+];
+const AWARENESS = ['當下', '分心但有察覺', '分心且未察覺', '不確定'];
+const TIME_FEEL = ['感覺很快', '差不多', '感覺很慢', '未知'];
+const uid = (prefix = 'evt') => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+const pad = n => String(n).padStart(2, '0');
+const toISODate = date => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+const parseDate = value => new Date(`${value}T12:00:00`);
+const addDays = (value, amount) => { const d = parseDate(value); d.setDate(d.getDate() + amount); return toISODate(d); };
+const startOfWeek = value => { const d = parseDate(value); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return toISODate(d); };
+const dateRange = (start, count) => Array.from({ length: count }, (_, i) => addDays(start, i));
+const minutesOf = time => { const [h, m] = String(time || '00:00').split(':').map(Number); return h * 60 + m; };
+const timeOf = minutes => `${pad(Math.floor((((minutes % 1440) + 1440) % 1440) / 60))}:${pad(((minutes % 60) + 60) % 60)}`;
+const durationMinutes = (start, end) => {
+  const s = minutesOf(start), e = minutesOf(end);
+  return e > s ? e - s : e + 1440 - s;
+};
+const normalizeEndDateTime = (start, end) => {
+  if (!start || !end) return end;
+  const startDate = start.slice(0, 10), endDate = end.slice(0, 10);
+  if (startDate === endDate && minutesOf(end.slice(11, 16)) <= minutesOf(start.slice(11, 16))) {
+    return `${addDays(startDate, 1)}T${end.slice(11, 16)}`;
+  }
+  return end;
+};
+const categoryLabel = id => CATEGORIES.find(x => x.id === id)?.label || '其他';
+const categoryColor = id => CATEGORIES.find(x => x.id === id)?.color || '#9b7653';
+
+function emptyState() {
+  return {
+    schemaVersion: 2,
+    tasks: [], events: [], actuals: [], reviews: [], goals: [],
+    settings: { theme: 'light', palette: 'frost', defaultBlockMinutes: 30, longBlockMinutes: 60, shortGapMaxMinutes: 30, reviewDay: 0, reviewTime: '18:00', weekStartsOn: 1 }
+  };
+}
+
+function normalizeEvent(input = {}) {
+  const start = input.start || `${input.date || toISODate(new Date())}T09:00`;
+  const end = input.end || `${input.date || toISODate(new Date())}T10:00`;
+  return {
+    id: input.id || uid(), title: String(input.title || '未命名活動').trim(), category: input.category || 'work',
+    start, end, status: input.status || 'todo', taskId: input.taskId || null, tags: Array.isArray(input.tags) ? input.tags : [],
+    deadline: input.deadline || null, deadlineKind: input.deadlineKind || null, deadlineSource: input.deadlineSource || '',
+    estimatedMinutes: Number.isFinite(Number(input.estimatedMinutes)) ? Number(input.estimatedMinutes) : durationMinutes(start.slice(11, 16), end.slice(11, 16)),
+    notes: String(input.notes || ''), seriesId: input.seriesId || null, recurrence: input.recurrence || null,
+    externalUid: input.externalUid || null, source: input.source || 'local', importedAt: input.importedAt || null,
+    occurrenceDate: input.occurrenceDate || start.slice(0, 10), isFixed: Boolean(input.isFixed), createdAt: input.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString()
+  };
+}
+
+function normalizeActual(input = {}) {
+  return {
+    id: input.id || uid('act'), eventId: input.eventId || null, title: String(input.title || '').trim(), category: input.category || 'other',
+    start: input.start, end: input.end, segments: Array.isArray(input.segments) ? input.segments : [],
+    status: input.status || 'done', focus: input.focus ?? null, energy: input.energy ?? null,
+    awareness: input.awareness || null, timeFeel: input.timeFeel || null, interruptions: Number(input.interruptions) || 0,
+    interruptionMinutes: Number(input.interruptionMinutes) || 0, reason: input.reason || '', notes: input.notes || '', source: input.source || 'manual',
+    createdAt: input.createdAt || new Date().toISOString()
+  };
+}
+
+function migrateLegacyState(raw) {
+  if (!raw || typeof raw !== 'object') return emptyState();
+  const state = emptyState();
+  const legacyTasks = Array.isArray(raw.tasks) ? raw.tasks : [];
+  for (const task of legacyTasks) {
+    if (!task || !task.title || !task.date) continue;
+    const start = `${task.date}T${task.startTime || '09:00'}`;
+    const estimated = Math.max(0, Number(task.estimatedMinutes) || 0);
+    const endDate = task.endDate || (estimated && minutesOf(task.startTime || '09:00') + estimated >= 1440 ? addDays(task.date, 1) : task.date);
+    const endTime = task.endTime || timeOf(minutesOf(task.startTime || '09:00') + (estimated || 30));
+    const statusMap = { todo: 'todo', in_progress: 'in_progress', done: 'done', partial: 'partial', cancelled: 'skipped' };
+    state.events.push(normalizeEvent({ id: String(task.id || uid()), title: task.title, category: mapLegacyCategory(task), start,
+      end: `${endDate}T${endTime}`, status: statusMap[task.status] || 'todo', estimatedMinutes: estimated, notes: task.notes || '',
+      deadline: task.deadline || null, deadlineKind: task.deadlineKind === 'external' ? 'external' : task.deadlineKind === 'self' ? 'self' : null,
+      deadlineSource: task.deadlineSource || '', tags: task.tags || [], isFixed: Boolean(task.isFixed) }));
+  }
+  for (const log of (Array.isArray(raw.activityLogs) ? raw.activityLogs : [])) {
+    if (!log?.date || !log?.startTime || !log?.endTime) continue;
+    const start = `${log.date}T${log.startTime}`;
+    const endDate = minutesOf(log.endTime) <= minutesOf(log.startTime) ? addDays(log.date, 1) : log.date;
+    state.actuals.push(normalizeActual({ id: log.id, title: log.title, category: mapLegacyCategory(log), start,
+      end: `${endDate}T${log.endTime}`, focus: log.focusRating || null, energy: log.energyAfter || null,
+      interruptions: log.interruptions, interruptionMinutes: log.interruptionMinutes, notes: log.note || '', source: 'legacy' }));
+  }
+  if (raw.settings) state.settings = { ...state.settings, theme: raw.settings.theme || 'light' };
+  return state;
+}
+
+function mapLegacyCategory(item) {
+  const text = `${item.category || ''} ${item.project || ''} ${item.title || ''}`;
+  if (/健康休息|睡眠/.test(text)) return /睡眠/.test(text) ? 'sleep' : 'rest';
+  if (/運動/.test(text)) return 'exercise';
+  if (/玩樂|休閒/.test(text)) return 'leisure';
+  if (/會議|社交/.test(text)) return 'social';
+  if (/行政|整理/.test(text)) return 'admin';
+  if (/回顧|反饋/.test(text)) return 'review';
+  if (/通勤|移動/.test(text)) return 'commute';
+  return 'work';
+}
+
+;
+// ---- src/scheduler.js ----
+function eventInterval(event) {
+  const startDate = event.start.slice(0, 10), startMinute = minutesOf(event.start.slice(11, 16));
+  const rawEndDate = event.end.slice(0, 10), endMinute = minutesOf(event.end.slice(11, 16));
+  const endDate = rawEndDate < startDate || (rawEndDate === startDate && endMinute <= startMinute) ? addDays(startDate, 1) : rawEndDate;
+  const days = Math.round((new Date(`${endDate}T12:00:00`) - new Date(`${startDate}T12:00:00`)) / 86400000);
+  return { startDate, startMinute, endDate, endMinute, days, duration: days * 1440 + endMinute - startMinute };
+}
+
+function splitAcrossDates(event) {
+  const { startDate, startMinute, duration } = eventInterval(event);
+  let cursor = startDate, remaining = duration, minute = startMinute;
+  const segments = [];
+  while (remaining > 0) {
+    const span = Math.min(remaining, 1440 - minute);
+    segments.push({ date: cursor, startMinute: minute, endMinute: minute + span, minutes: span });
+    remaining -= span; cursor = addDays(cursor, 1); minute = 0;
+  }
+  return segments;
+}
+
+function overlaps(a, b) {
+  const as = new Date(a.start).getTime(), ae = new Date(a.end).getTime();
+  const bs = new Date(b.start).getTime(), be = new Date(b.end).getTime();
+  return as < be && bs < ae;
+}
+
+function findConflicts(candidate, events, ignoreId = null) {
+  return events.filter(event => event.id !== ignoreId && overlaps(candidate, event));
+}
+
+function createRecurringEvents(input, { throughDate = addDays(input.start.slice(0, 10), 365) } = {}) {
+  const base = normalizeEvent(input), recurrence = base.recurrence;
+  if (!recurrence?.frequency || recurrence.frequency === 'none') return [base];
+  const step = Math.max(1, Number(recurrence.interval) || 1);
+  const startDate = base.start.slice(0, 10), startTime = base.start.slice(11, 16), endClock = base.end.slice(11, 16);
+  const duration = eventInterval(base).duration;
+  const dates = [];
+  for (const date of dateRange(startDate, Math.min(370, Math.ceil((new Date(`${throughDate}T12:00`) - new Date(`${startDate}T12:00`)) / 86400000) + 1))) {
+    const diffDays = Math.round((new Date(`${date}T12:00`) - new Date(`${startDate}T12:00`)) / 86400000);
+    let include = false;
+    if (recurrence.frequency === 'daily') include = diffDays % step === 0;
+    if (recurrence.frequency === 'weekly') include = Math.floor(diffDays / 7) % step === 0 && (diffDays % 7 === 0 || (recurrence.weekdays || []).includes(parseDateWeekday(date)));
+    if (recurrence.frequency === 'monthly') {
+      const first = new Date(`${startDate}T12:00`), current = new Date(`${date}T12:00`);
+      include = current.getDate() === first.getDate() && ((current.getFullYear() - first.getFullYear()) * 12 + current.getMonth() - first.getMonth()) % step === 0;
+    }
+    if (include && date <= throughDate) dates.push(date);
+  }
+  const seriesId = base.seriesId || uid('series');
+  return dates.map((date, index) => {
+    const start = `${date}T${startTime}`;
+    const endDate = duration >= 1440 || minutesOf(startTime) + duration >= 1440 ? addDays(date, Math.floor((minutesOf(startTime) + duration) / 1440)) : date;
+    const end = `${endDate}T${timeOf(minutesOf(startTime) + duration)}`;
+    return normalizeEvent({ ...base, id: index === 0 ? base.id : uid(), start, end, seriesId, occurrenceDate: date,
+      recurrence: index === 0 ? recurrence : null });
+  });
+}
+
+function parseDateWeekday(date) { return parseInt((new Date(`${date}T12:00:00`).getDay() + 6) % 7, 10); }
+
+function suggestSlots(task, events, settings, rangeStart, days = 7, maxPerDay = 3) {
+  const duration = Math.max(15, Number(task.estimatedMinutes) || Number(settings.defaultBlockMinutes) || 30);
+  const workStart = Number(settings.dayStartMinute ?? 7 * 60), workEnd = Number(settings.dayEndMinute ?? 22 * 60);
+  const dates = dateRange(rangeStart || startOfWeek(new Date().toISOString().slice(0, 10)), days);
+  const suggestions = [];
+  for (const date of dates) {
+    const dayEvents = events.flatMap(event => splitAcrossDates(event).filter(segment => segment.date === date).map(segment => ({ start: segment.startMinute, end: segment.endMinute }))).sort((a, b) => a.start - b.start);
+    let cursor = workStart, count = 0;
+    for (const event of dayEvents) {
+      if (event.start - cursor >= duration) { suggestions.push(slot(date, cursor, duration)); count++; }
+      cursor = Math.max(cursor, event.end);
+      if (count >= maxPerDay) break;
+    }
+    if (count < maxPerDay && workEnd - cursor >= duration) suggestions.push(slot(date, cursor, duration));
+  }
+  const deadline = task.deadline ? new Date(task.deadline).getTime() : Infinity;
+  return suggestions.filter(x => new Date(x.start).getTime() <= deadline).slice(0, 8);
+}
+
+function slot(date, startMinute, duration) {
+  const start = `${date}T${timeOf(startMinute)}`;
+  const endDate = startMinute + duration >= 1440 ? addDays(date, 1) : date;
+  return { start, end: `${endDate}T${timeOf(startMinute + duration)}`, minutes: duration };
+}
+
+function getWeekDates(date) { return dateRange(startOfWeek(date), 7); }
+
+;
+// ---- src/analytics.js ----
+function summarizeByCategory(events, actuals, startDate, endDate) {
+  return CATEGORIES.map(category => {
+    const planned = events.flatMap(event => splitAcrossDates(event).filter(part => part.date >= startDate && part.date <= endDate && event.category === category.id).map(part => part.minutes)).reduce((sum, n) => sum + n, 0);
+    const actual = actuals.flatMap(entry => splitAcrossDates(entry).filter(part => part.date >= startDate && part.date <= endDate && entry.category === category.id).map(part => part.minutes)).reduce((sum, n) => sum + n, 0);
+    return { ...category, planned, actual, difference: actual - planned };
+  }).filter(row => row.planned || row.actual);
+}
+
+function summarizePeriod(events, actuals, startDate, endDate) {
+  const categoryRows = summarizeByCategory(events, actuals, startDate, endDate);
+  const planned = categoryRows.reduce((sum, row) => sum + row.planned, 0);
+  const actual = categoryRows.reduce((sum, row) => sum + row.actual, 0);
+  const actualSegments = actuals.flatMap(splitAcrossDates).filter(part => part.date >= startDate && part.date <= endDate);
+  return {
+    plannedMinutes: planned, actualMinutes: actual, differenceMinutes: actual - planned,
+    actualRecords: actualSegments.length, trackedDays: new Set(actualSegments.map(x => x.date)).size,
+    longestBlockMinutes: actualSegments.reduce((max, x) => Math.max(max, x.minutes), 0),
+    categories: categoryRows
+  };
+}
+
+function estimateError(events, actuals) {
+  const actualByEvent = new Map();
+  for (const actual of actuals) if (actual.eventId) actualByEvent.set(actual.eventId, (actualByEvent.get(actual.eventId) || 0) + splitAcrossDates(actual).reduce((sum, x) => sum + x.minutes, 0));
+  const pairs = events.filter(event => actualByEvent.has(event.id) && Number(event.estimatedMinutes) > 0).map(event => ({
+    eventId: event.id, estimate: Number(event.estimatedMinutes), actual: actualByEvent.get(event.id)
+  }));
+  if (!pairs.length) return { n: 0, meanAbsoluteError: null, bias: null };
+  return { n: pairs.length,
+    meanAbsoluteError: pairs.reduce((sum, p) => sum + Math.abs(p.actual - p.estimate), 0) / pairs.length,
+    bias: pairs.reduce((sum, p) => sum + p.actual - p.estimate, 0) / pairs.length };
+}
+
+function getEventDuration(event) { return durationMinutes(event.start.slice(11, 16), event.end.slice(11, 16)); }
+
+;
+// ---- src/importer.js ----
+function parseCSV(text) {
+  const records = [];
+  let record = [], cell = '', quoted = false;
+  const source = String(text || '').replace(/^\ufeff/, '');
+  for (let i = 0; i < source.length; i++) {
+    const ch = source[i];
+    if (ch === '"' && quoted && source[i + 1] === '"') { cell += '"'; i++; }
+    else if (ch === '"') quoted = !quoted;
+    else if (ch === ',' && !quoted) { record.push(cell); cell = ''; }
+    else if ((ch === '\n' || ch === '\r') && !quoted) {
+      if (ch === '\r' && source[i + 1] === '\n') i++;
+      record.push(cell);
+      if (record.some(value => value !== '')) records.push(record);
+      record = []; cell = '';
+    } else cell += ch;
+  }
+  if (quoted) throw new Error('CSV 引號沒有成對，請重新匯出檔案後再試');
+  record.push(cell);
+  if (record.some(value => value !== '')) records.push(record);
+  if (records.length < 2) return [];
+  const headers = records.shift().map(value => value.trim().toLocaleLowerCase());
+  const read = (row, ...keys) => {
+    for (const key of keys) {
+      const index = headers.indexOf(key.toLocaleLowerCase());
+      if (index >= 0 && row[index] !== undefined && row[index] !== '') return row[index];
+    }
+    return '';
+  };
+  return records.map(row => {
+    const date = read(row, 'date', '日期');
+    const startValue = read(row, 'start', '開始', '開始時間', '開始日期時間');
+    const endValue = read(row, 'end', '結束', '結束時間', '結束日期時間');
+    const start = startValue.includes('T') ? startValue : date ? `${date}T${startValue || '09:00'}` : '';
+    const end = endValue.includes('T') ? endValue : date ? `${date}T${endValue || '10:00'}` : '';
+    const title = read(row, 'title', '標題', '活動', 'summary');
+    if (!title || !start || !end) return null;
+    const rawStatus = read(row, 'status', '狀態');
+    const status = ({ '未開始': 'todo', '進行中': 'in_progress', '已完成': 'done', '部分完成': 'partial', '取消／略過': 'skipped' })[rawStatus] || rawStatus || 'todo';
+    return normalizeImported({
+      title, category: read(row, 'category', '類別'), start, end, status,
+      deadline: read(row, 'deadline', '期限') || null,
+      deadlineKind: read(row, 'deadlinekind', '期限種類') || null, notes: read(row, 'notes', '備註'),
+      estimatedMinutes: Number(read(row, 'estimatedminutes', '預估分鐘')) || undefined
+    });
+  }).filter(Boolean);
+}
+
+function findDuplicate(row, events) {
+  if (row.externalUid) {
+    const byUid = events.find(event => event.externalUid === row.externalUid);
+    if (byUid) return byUid;
+  }
+  return events.find(event => event.title.trim().toLocaleLowerCase() === String(row.title || '').trim().toLocaleLowerCase()
+    && event.start === row.start && event.end === row.end) || null;
+}
+
+function normalizeImported(row) {
+  const categoryInput = String(row.category || 'other').trim();
+  const category = CATEGORIES.find(item => item.id === categoryInput || item.label === categoryInput)?.id || 'other';
+  return normalizeEvent({ ...row, category, source: row.source || 'imported' });
+}
+
+function uniqueId(preferred, collection, prefix) {
+  if (preferred && !collection.some(item => item.id === preferred)) return preferred;
+  return uid(prefix);
+}
+
+/** Merge a reviewed import into a mutable application state, preserving links between records. */
+function mergeImportBatch(store, rows, extras = {}) {
+  const eventsIn = Array.isArray(rows) ? rows : [];
+  const tasksIn = Array.isArray(extras.tasks) ? extras.tasks : [];
+  const actualsIn = Array.isArray(extras.actuals) ? extras.actuals : [];
+  const reviewsIn = Array.isArray(extras.reviews) ? extras.reviews : [];
+  const goalsIn = Array.isArray(extras.goals) ? extras.goals : [];
+  const eventIds = new Map();
+  const taskIds = new Map();
+  const eventActions = [];
+  const reservedEventIds = new Set(store.events.map(event => event.id));
+  const allocateEventId = preferred => {
+    let id = preferred && !reservedEventIds.has(preferred) ? preferred : uid('evt');
+    while (reservedEventIds.has(id)) id = uid('evt');
+    reservedEventIds.add(id);
+    return id;
+  };
+
+  for (const row of eventsIn) {
+    const duplicate = findDuplicate(row, store.events);
+    if (row.decision === 'skip') {
+      if (duplicate && row.id) eventIds.set(row.id, duplicate.id);
+      continue;
+    }
+    const replace = row.decision === 'replace' && duplicate;
+    const existing = replace ? duplicate : null;
+    const targetId = existing?.id || allocateEventId(row.id);
+    if (row.id) eventIds.set(row.id, targetId);
+    eventActions.push({ row, targetId, existingId: existing?.id || null });
+  }
+
+  let addedTasks = 0;
+  for (const task of tasksIn) {
+    const existing = store.tasks.find(item => item.id === task.id);
+    const targetId = existing?.id || uniqueId(task.id, store.tasks, 'task');
+    if (task.id) taskIds.set(task.id, targetId);
+    if (!existing) {
+      store.tasks.push({ ...task, id: targetId, eventId: eventIds.get(task.eventId) || store.events.find(item => item.id === task.eventId)?.id || null });
+      addedTasks++;
+    }
+  }
+
+  let addedEvents = 0;
+  let replacedEvents = 0;
+  for (const { row, targetId, existingId } of eventActions) {
+    const event = normalizeImported({ ...row, id: targetId, importedAt: row.importedAt || new Date().toISOString(), taskId: taskIds.get(row.taskId) || store.tasks.find(item => item.id === row.taskId)?.id || null });
+    if (existingId) {
+      store.events = store.events.map(item => item.id === existingId ? event : item);
+      replacedEvents++;
+    } else {
+      store.events.push(event);
+      addedEvents++;
+    }
+  }
+
+  let addedActuals = 0;
+  for (const actual of actualsIn) {
+    if (store.actuals.some(item => item.id === actual.id)) continue;
+    const linkedEventId = actual.eventId ? eventIds.get(actual.eventId) || null : null;
+    store.actuals.push(normalizeActual({ ...actual, eventId: linkedEventId }));
+    addedActuals++;
+  }
+
+  const appendUnique = (target, incoming, prefix) => {
+    let count = 0;
+    for (const item of incoming) {
+      if (target.some(existing => existing.id === item.id)) continue;
+      target.push({ ...item, id: uniqueId(item.id, target, prefix) });
+      count++;
+    }
+    return count;
+  };
+  const addedReviews = appendUnique(store.reviews, reviewsIn, 'review');
+  const addedGoals = appendUnique(store.goals, goalsIn, 'goal');
+  return { addedEvents, replacedEvents, addedTasks, addedActuals, addedReviews, addedGoals };
+}
+
+;
+// ---- src/app.js ----
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+const localToday = () => toISODate(new Date());
+const fmtDate = date => `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
+const fmtTime = value => value?.slice(11, 16) || '';
+const fmtDuration = minutes => `${Math.floor(minutes / 60)}小時${minutes % 60 ? ` ${minutes % 60}分` : ''}`;
+
+function loadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (saved?.schemaVersion === 2 && Array.isArray(saved.events) && Array.isArray(saved.tasks)) return { ...emptyState(), ...saved };
+  } catch { /* Keep a clean state; malformed storage is never overwritten until the first explicit edit. */ }
+  return emptyState();
+}
+
+const state = loadState();
+let selectedDate = localToday();
+let viewMode = window.matchMedia('(max-width: 700px)').matches ? 'day' : 'week';
+let currentPage = 'workbench';
+let selectedEventId = null;
+let searchText = '';
+let filterCategory = 'all';
+let undoStack = [];
+let toastTimer;
+let modalDraft = null;
+let pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] };
+
+function persist(label = '已自動保存') {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const el = $('#save-state');
+    if (el) el.textContent = `${label} · ${new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}`;
+  } catch {
+    notify('本機儲存空間不足，請先匯出 JSON');
+  }
+}
+
+function change(mutator, message = '已保存') {
+  undoStack.push(JSON.stringify(state));
+  if (undoStack.length > 30) undoStack.shift();
+  mutator(state);
+  persist();
+  render();
+  notify(message);
+}
+
+function undo() {
+  const snapshot = undoStack.pop();
+  if (!snapshot) return notify('目前沒有可復原的操作');
+  Object.assign(state, JSON.parse(snapshot));
+  persist('已復原'); render(); notify('已復原上一個操作');
+}
+
+function notify(message) {
+  const el = $('#toast');
+  if (!el) return;
+  el.textContent = message; el.classList.add('visible');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('visible'), 2600);
+}
+
+function selectedPeriodDates() {
+  if (viewMode === 'day') return [selectedDate];
+  if (viewMode === 'month') {
+    const d = parseDate(selectedDate); d.setDate(1);
+    const mondayOffset = (d.getDay() + 6) % 7; d.setDate(d.getDate() - mondayOffset);
+    return dateRange(toISODate(d), 42);
+  }
+  return getWeekDates(selectedDate);
+}
+
+function allEventsForDate(date) {
+  return state.events.filter(event => splitAcrossDates(event).some(part => part.date === date));
+}
+
+function updateRangeLabel() {
+  const label = $('#range-label');
+  if (!label) return;
+  if (viewMode === 'day' || (window.matchMedia('(max-width: 540px)').matches && viewMode === 'week')) label.textContent = `${selectedDate} ${['日', '一', '二', '三', '四', '五', '六'][parseDate(selectedDate).getDay()]}`;
+  else if (viewMode === 'month') label.textContent = `${parseDate(selectedDate).getFullYear()} 年 ${parseDate(selectedDate).getMonth() + 1} 月`;
+  else { const dates = getWeekDates(selectedDate); label.textContent = `${fmtDate(dates[0])} – ${fmtDate(dates[6])}`; }
+}
+
+function render() {
+  document.body.dataset.theme = state.settings.theme || 'light';
+  document.body.dataset.palette = state.settings.palette || 'frost';
+  $$('.nav-item[data-page]').forEach(button => button.classList.toggle('active', button.dataset.page === currentPage));
+  $('#page-title').textContent = ({ workbench: '排程工作台', 'import-calendar': '匯入日曆', analytics: '分析與回顧', knowledge: '公式與知識庫', data: '匯入與設定' })[currentPage];
+  updateRangeLabel();
+  const root = $('#page-content');
+  if (currentPage === 'workbench') root.innerHTML = renderWorkbench();
+  if (currentPage === 'import-calendar') root.innerHTML = renderImportedCalendar();
+  if (currentPage === 'analytics') root.innerHTML = renderAnalytics();
+  if (currentPage === 'knowledge') root.innerHTML = renderKnowledge();
+  if (currentPage === 'data') root.innerHTML = renderData();
+  if (selectedEventId && !state.events.some(event => event.id === selectedEventId)) selectedEventId = null;
+}
+
+function importedEvents() {
+  return state.events.filter(event => Boolean(event.importedAt) || event.source === 'imported' || event.source === 'legacy');
+}
+
+function renderImportedCalendar() {
+  const dates = selectedPeriodDates();
+  const rows = importedEvents();
+  const categories = CATEGORIES.map(category => ({ ...category, count: rows.filter(event => event.category === category.id).length })).filter(category => category.count);
+  const date = parseDate(selectedDate);
+  return `<section class="import-calendar-layout">
+    <aside class="import-calendar-rail">
+      <div class="rail-card mini-calendar"><div class="rail-heading"><strong>日期</strong><div><button class="tiny-button" data-action="mini-prev" aria-label="上個月">‹</button><button class="tiny-button" data-action="mini-next" aria-label="下個月">›</button></div></div>${renderMiniCalendar()}</div>
+      <div class="rail-card imported-sources"><div class="rail-heading"><strong>匯入的日曆</strong><span class="count-pill">${rows.length}</span></div><div class="source-calendar-row"><i></i><span>匯入行程</span><b>${rows.length}</b></div>${categories.map(category => `<div class="source-category-row"><i style="--category:${category.color}"></i><span>${category.label}</span><b>${category.count}</b></div>`).join('')}${rows.length ? '' : '<p class="helper-text">匯入完成後，行程會顯示在這裡。</p>'}<button class="text-button" data-page="data">匯入或管理資料 →</button></div>
+    </aside>
+    <section class="import-calendar-area"><div class="import-calendar-toolbar"><div><span class="eyebrow">${rows.length} 筆匯入行程</span><h1>${date.getFullYear()} 年 ${date.getMonth() + 1} 月</h1></div><div class="calendar-filters"><select id="import-category-filter" class="select-control"><option value="all">所有分類</option>${CATEGORIES.map(c => `<option value="${c.id}" ${filterCategory === c.id ? 'selected' : ''}>${c.label}</option>`).join('')}</select><button class="outline-button" data-action="today">今天</button><button class="icon-button" data-action="prev" aria-label="上個月">‹</button><button class="icon-button" data-action="next" aria-label="下個月">›</button></div></div>
+      ${renderImportedMonthGrid(dates, rows)}
+      <div class="import-calendar-foot"><span><i></i>匯入行程</span><span>選取行程可查看來源、時間與備註</span></div>
+    </section><aside class="inspector import-inspector" id="inspector">${renderInspector()}</aside>
+  </section>`;
+}
+
+function renderImportedMonthGrid(dates, events) {
+  const weekdays = ['一','二','三','四','五','六','日'];
+  return `<div class="import-month-grid"><div class="import-month-weekdays">${weekdays.map(day => `<span>${day}</span>`).join('')}</div><div class="import-month-days">${dates.map(date => {
+    const dayEvents = events.filter(event => splitAcrossDates(event).some(part => part.date === date) && (filterCategory === 'all' || event.category === filterCategory));
+    return `<div class="import-month-day ${date === localToday() ? 'today' : ''} ${date === selectedDate ? 'chosen' : ''} ${date.slice(0,7) !== selectedDate.slice(0,7) ? 'outside' : ''}"><button class="import-day-number" data-date="${date}">${Number(date.slice(8,10))}</button><div class="import-day-events">${dayEvents.slice(0,5).map(event => `<button class="import-month-event ${selectedEventId === event.id ? 'selected' : ''}" style="--category:${categoryColor(event.category)}" data-action="select-event" data-id="${escapeHTML(event.id)}"><span>${fmtTime(event.start)}</span><b>${escapeHTML(event.title)}</b></button>`).join('')}${dayEvents.length > 5 ? `<span class="import-more">還有 ${dayEvents.length - 5} 筆</span>` : ''}</div></div>`;
+  }).join('')}</div></div>`;
+}
+
+function renderWorkbench() {
+  const dates = selectedPeriodDates();
+  const unplanned = state.tasks.filter(task => !task.eventId && task.status !== 'done' && task.status !== 'skipped');
+  const pendingReview = !state.reviews.some(review => review.periodEnd === selectedDate && review.type === 'daily');
+  const now = new Date();
+  const todayEvent = state.events.find(event => event.start.slice(0, 10) === localToday() && event.status === 'in_progress');
+  return `<section class="workbench-layout">
+    <aside class="left-rail">
+      <div class="rail-card mini-calendar"><div class="rail-heading"><strong>日期</strong><div><button class="tiny-button" data-action="mini-prev">‹</button><button class="tiny-button" data-action="mini-next">›</button></div></div>${renderMiniCalendar()}</div>
+      <div class="rail-card"><div class="rail-heading"><strong>待辦收件匣</strong><span class="count-pill">${unplanned.length}</span></div><div class="task-list">${unplanned.length ? unplanned.map(renderTaskCard).join('') : '<p class="empty compact">目前沒有未排程待辦。<br>點「快速新增」記下下一件事。</p>'}</div></div>
+      <div class="rail-card review-reminder"><span class="eyebrow">每日／每週回顧</span><strong>${pendingReview ? '今天的回顧還沒完成' : '今天已完成回顧'}</strong><p>回顧只需記下實際完成、主要差異和下一步。</p><button class="text-button" data-action="open-review">開始回顧 →</button></div>
+      ${todayEvent ? `<div class="rail-card timer-card"><span class="eyebrow">進行中的活動</span><strong>${escapeHTML(todayEvent.title)}</strong><p>${fmtTime(todayEvent.start)} 開始</p><button class="text-button" data-action="finish-event" data-id="${todayEvent.id}">記錄完成 →</button></div>` : ''}
+    </aside>
+    <section class="calendar-area">
+      <div class="calendar-toolbar"><div class="segmented"><button data-view="day" class="${viewMode === 'day' ? 'selected' : ''}">日</button><button data-view="week" class="${viewMode === 'week' ? 'selected' : ''}">週</button><button data-view="month" class="${viewMode === 'month' ? 'selected' : ''}">月</button></div>
+        <div class="calendar-filters"><input id="calendar-search" class="search-input" placeholder="搜尋活動／備註" value="${escapeHTML(searchText)}"><select id="category-filter" class="select-control"><option value="all">所有分類</option>${CATEGORIES.map(c => `<option value="${c.id}" ${filterCategory === c.id ? 'selected' : ''}>${c.label}</option>`).join('')}</select></div></div>
+      ${viewMode === 'month' ? renderMonthGrid(dates) : renderTimeGrid(dates)}
+      <div class="calendar-legend">${CATEGORIES.slice(0, 7).map(c => `<span><i style="--category:${c.color}"></i>${c.label}</span>`).join('')}<span class="legend-note">重疊事件並排；空白時間不會自動視為可用</span></div>
+    </section>
+    <aside class="inspector" id="inspector">${renderInspector()}</aside>
+  </section>`;
+}
+
+function renderMiniCalendar() {
+  const date = parseDate(selectedDate), first = new Date(date.getFullYear(), date.getMonth(), 1, 12), offset = (first.getDay() + 6) % 7;
+  const start = new Date(first); start.setDate(1 - offset);
+  const dates = Array.from({ length: 42 }, (_, i) => { const d = new Date(start); d.setDate(start.getDate() + i); return toISODate(d); });
+  return `<div class="mini-month-label">${date.getFullYear()} 年 ${date.getMonth() + 1} 月</div><div class="mini-grid">${['一','二','三','四','五','六','日'].map(x => `<span class="mini-weekday">${x}</span>`).join('')}${dates.map(d => `<button class="mini-day ${d === selectedDate ? 'chosen' : ''} ${d.slice(0, 7) !== selectedDate.slice(0, 7) ? 'outside' : ''} ${d === localToday() ? 'today' : ''}" data-date="${d}">${Number(d.slice(8, 10))}</button>`).join('')}</div>`;
+}
+
+function renderTaskCard(task) {
+  return `<article class="task-card" draggable="true" data-drag-task="${escapeHTML(task.id)}"><span class="task-dot" style="--category:${categoryColor(task.category)}"></span><div class="task-main"><strong>${escapeHTML(task.title)}</strong><small>${categoryLabel(task.category)}${task.estimatedMinutes ? ` · 約 ${task.estimatedMinutes} 分` : ''}${task.deadline ? ` · 期限 ${task.deadline}` : ''}</small></div><button class="suggest-button" data-action="suggest" data-id="${escapeHTML(task.id)}" title="建議時段">⋯</button></article>`;
+}
+
+function renderTimeGrid(dates) {
+  const startHour = 6, endHour = 24, pxPerMinute = 0.92;
+  const days = viewMode === 'day' || (window.matchMedia('(max-width: 540px)').matches && viewMode === 'week') ? [selectedDate] : dates;
+  const headers = days.map(date => `<button class="day-header ${date === localToday() ? 'today' : ''} ${date === selectedDate ? 'selected-day' : ''}" data-date="${date}"><b>${['日','一','二','三','四','五','六'][parseDate(date).getDay()]}</b><span>${Number(date.slice(8, 10))}</span></button>`).join('');
+  const hours = Array.from({ length: endHour - startHour }, (_, i) => `<div class="hour-label" style="top:${i * 60 * pxPerMinute}px">${String(startHour + i).padStart(2, '0')}:00</div>`).join('');
+  const columns = days.map(date => `<div class="day-column" data-drop-date="${date}"><div class="drop-hint"></div>${Array.from({ length: endHour - startHour }, (_, i) => `<button class="time-slot" style="top:${i * 60 * pxPerMinute}px" data-action="new-at" data-date="${date}" data-time="${String(startHour + i).padStart(2, '0')}:00" aria-label="${date} ${startHour + i}:00 新增活動"></button>`).join('')}${renderDayEvents(date, startHour, endHour, pxPerMinute)}</div>`).join('');
+  const height = (endHour - startHour) * 60 * pxPerMinute;
+  return `<div class="calendar-scroll"><div class="week-header"><div class="time-gutter"></div><div class="day-head-grid" style="--day-count:${days.length}">${headers}</div></div><div class="time-grid-wrap" style="--day-count:${days.length}"><div class="time-gutter hour-gutter" style="height:${height}px">${hours}</div><div class="day-columns" style="--day-count:${days.length};height:${height}px">${columns}</div></div></div>`;
+}
+
+function renderDayEvents(date, startHour, endHour, pxPerMinute) {
+  const events = allEventsForDate(date).filter(event => matchesFilters(event));
+  const occurrences = [];
+  for (const event of events) {
+    const part = splitAcrossDates(event).find(x => x.date === date);
+    if (!part) continue;
+    occurrences.push({ event, start: part.startMinute, end: part.endMinute });
+  }
+  occurrences.sort((a, b) => a.start - b.start || b.end - a.end);
+  const clusters = [];
+  for (const occurrence of occurrences) {
+    let cluster = clusters.at(-1);
+    if (!cluster || occurrence.start >= cluster.end) { cluster = { end: occurrence.end, items: [] }; clusters.push(cluster); }
+    cluster.end = Math.max(cluster.end, occurrence.end); cluster.items.push(occurrence);
+  }
+  const hourStart = startHour * 60, hourEnd = endHour * 60;
+  return clusters.flatMap(cluster => cluster.items.map((item, index) => {
+    const clippedStart = Math.max(hourStart, item.start), clippedEnd = Math.min(hourEnd, item.end);
+    if (clippedEnd <= clippedStart) return '';
+    const total = cluster.items.length, width = 100 / total, category = categoryColor(item.event.category);
+    const top = (clippedStart - hourStart) * pxPerMinute, height = Math.max(26, (clippedEnd - clippedStart) * pxPerMinute);
+    return `<button class="event-card ${item.event.id === selectedEventId ? 'selected' : ''} status-${item.event.status}" style="top:${top}px;height:${height}px;left:calc(${index * width}% + 3px);width:calc(${width}% - 6px);--category:${category}" data-action="select-event" data-id="${escapeHTML(item.event.id)}" draggable="true" data-drag-event="${escapeHTML(item.event.id)}"><span class="event-time">${fmtTime(item.event.start)}–${fmtTime(item.event.end)}</span><strong>${escapeHTML(item.event.title)}</strong>${height > 48 ? `<small>${categoryLabel(item.event.category)}${item.event.status === 'done' ? ' · 已完成' : ''}</small>` : ''}</button>`;
+  })).join('');
+}
+
+function renderMonthGrid(dates) {
+  return `<div class="month-grid"><div class="month-weekdays">${['一','二','三','四','五','六','日'].map(x => `<span>${x}</span>`).join('')}</div><div class="month-days">${dates.map(date => {
+    const events = allEventsForDate(date).filter(matchesFilters).slice(0, 4);
+    return `<button class="month-day ${date === selectedDate ? 'selected-day' : ''} ${date === localToday() ? 'today' : ''} ${date.slice(0,7) !== selectedDate.slice(0,7) ? 'outside' : ''}" data-date="${date}"><b>${Number(date.slice(8,10))}</b>${events.map(event => `<span class="month-event" style="--category:${categoryColor(event.category)}" data-action="select-event" data-id="${event.id}">${escapeHTML(event.title)}</span>`).join('')}</button>`;
+  }).join('')}</div></div>`;
+}
+
+function matchesFilters(event) {
+  const text = `${event.title} ${event.notes || ''} ${(event.tags || []).join(' ')}`.toLowerCase();
+  return (filterCategory === 'all' || event.category === filterCategory) && (!searchText || text.includes(searchText.toLowerCase()));
+}
+
+function renderInspector() {
+  const event = state.events.find(item => item.id === selectedEventId);
+  if (!event) return `<div class="inspector-empty"><span class="inspector-icon">◷</span><strong>選取一個活動</strong><p>在日曆點選行程，這裡會顯示詳情和快速操作。</p><button class="outline-button" data-action="new-event">新增行程</button></div>`;
+  const actuals = state.actuals.filter(actual => actual.eventId === event.id);
+  const actualMinutes = actuals.reduce((sum, actual) => sum + splitAcrossDates(actual).reduce((n, segment) => n + segment.minutes, 0), 0);
+  return `<div class="inspector-head"><span class="eyebrow">活動詳情</span><button class="close-inspector" data-action="clear-selection" aria-label="關閉詳情">×</button></div>
+    <div class="inspector-color" style="--category:${categoryColor(event.category)}"></div><h2>${escapeHTML(event.title)}</h2><div class="inspector-meta"><span>${categoryLabel(event.category)}</span><span>${event.start.slice(0,10)}</span><span>${fmtTime(event.start)}–${fmtTime(event.end)}</span>${event.importedAt || event.source === 'imported' || event.source === 'legacy' ? `<span>來源：匯入資料</span>` : ''}</div>
+    <div class="inspector-section"><span>計畫時長</span><strong>${fmtDuration(Math.max(0, durationMinutes(fmtTime(event.start), fmtTime(event.end))))}</strong></div>
+    <div class="inspector-section"><span>實際紀錄</span><strong>${actuals.length ? fmtDuration(actualMinutes) : '尚未記錄'}</strong></div>
+    <div class="inspector-section"><span>狀態</span><select id="event-status" class="select-control">${TASK_STATUSES.map(s => `<option value="${s.id}" ${event.status === s.id ? 'selected' : ''}>${s.label}</option>`).join('')}</select></div>
+    ${event.deadline ? `<div class="inspector-section"><span>${event.deadlineKind === 'external' ? '外部硬期限' : '自訂期限'}</span><strong>${escapeHTML(event.deadline)}</strong></div>` : ''}
+    ${event.notes ? `<p class="inspector-notes">${escapeHTML(event.notes)}</p>` : ''}${event.importedAt ? `<p class="helper-text">匯入時間：${new Date(event.importedAt).toLocaleString('zh-TW')}</p>` : ''}
+    <div class="inspector-actions"><button class="outline-button" data-action="edit-event" data-id="${event.id}">編輯</button><button class="outline-button" data-action="log-actual" data-id="${event.id}">記錄實際</button>${event.seriesId ? `<button class="outline-button" data-action="edit-series" data-id="${event.id}">修改重複行程</button>` : ''}<button class="danger-button" data-action="delete-event" data-id="${event.id}">刪除</button></div>
+    ${actuals.length ? `<div class="actual-list"><strong>實際紀錄</strong>${actuals.map(actual => `<div><span>${actual.start.slice(0,10)} ${fmtTime(actual.start)}–${fmtTime(actual.end)}</span><small>${actual.focus ? `專注 ${actual.focus}/5` : '未填專注'}${actual.awareness ? ` · ${actual.awareness}` : ''}</small></div>`).join('')}</div>` : ''}`;
+}
+
+function renderAnalytics() {
+  const week = getWeekDates(selectedDate), start = week[0], end = week[6];
+  const summary = summarizePeriod(state.events, state.actuals, start, end);
+  const rows = summarizeByCategory(state.events, state.actuals, start, end);
+  const maximum = Math.max(30, ...rows.flatMap(row => [row.planned, row.actual]));
+  const err = estimateError(state.events, state.actuals);
+  const reviews = state.reviews.filter(r => r.periodEnd >= start && r.periodEnd <= end);
+  return `<div class="page-heading"><div><span class="eyebrow">${start} – ${end}</span><h1>分析與回顧</h1><p>只使用已記錄的資料；未知不會被當成 0。</p></div><div class="toolbar-group"><button class="outline-button" data-action="prev">‹ 前週</button><button class="outline-button" data-action="next">後週 ›</button></div></div>
+    <section class="stat-grid"><article class="metric-card"><span>計畫時間</span><strong>${fmtDuration(summary.plannedMinutes)}</strong><small>週一至週日</small></article><article class="metric-card"><span>已記錄實際</span><strong>${fmtDuration(summary.actualMinutes)}</strong><small>${summary.trackedDays} 天有紀錄</small></article><article class="metric-card"><span>實際紀錄數</span><strong>${summary.actualRecords}</strong><small>缺漏不等於零</small></article><article class="metric-card"><span>估時樣本</span><strong>${err.n}</strong><small>${err.n ? `平均絕對誤差 ${Math.round(err.meanAbsoluteError)} 分` : '資料不足，暫不計算'}</small></article></section>
+    <section class="panel"><div class="panel-heading"><div><h2>各分類：計畫與實際</h2><p>實際值由實際紀錄計算，跨午夜依日期拆分。</p></div><span class="sample-count">樣本 ${summary.actualRecords} 段</span></div>${rows.length ? `<div class="comparison-list">${rows.map(row => `<div class="comparison-row"><span class="comparison-label"><i style="--category:${row.color}"></i>${row.label}</span><div class="dual-bars"><div class="bar-line"><small>計畫</small><span class="bar-track"><i class="planned-bar" style="width:${Math.max(row.planned ? 2 : 0, row.planned / maximum * 100)}%;--category:${row.color}"></i></span><b>${row.planned} 分</b></div><div class="bar-line"><small>實際</small><span class="bar-track"><i class="actual-bar" style="width:${Math.max(row.actual ? 2 : 0, row.actual / maximum * 100)}%;--category:${row.color}"></i></span><b>${row.actual} 分</b></div></div></div>`).join('')}</div>` : '<div class="empty">這週還沒有行程或實際紀錄。</div>'}</section>
+    <section class="panel two-column-panels"><div><div class="panel-heading"><div><h2>時間型態</h2><p>依實際活動段計算，不推測未填資料。</p></div></div><div class="mini-metrics"><div><span>最長連續活動段</span><b>${summary.longestBlockMinutes ? fmtDuration(summary.longestBlockMinutes) : '未知'}</b></div><div><span>計畫與實際差異</span><b>${summary.actualRecords ? `${summary.differenceMinutes >= 0 ? '+' : ''}${fmtDuration(Math.abs(summary.differenceMinutes))}` : '未知'}</b></div></div></div><div><div class="panel-heading"><div><h2>每週回顧</h2><p>${reviews.length} 則回顧紀錄</p></div><button class="text-button" data-action="open-review">新增回顧 →</button></div>${reviews.length ? reviews.map(r => `<p class="review-quote"><b>${r.periodEnd}</b> ${escapeHTML(r.nextAction || r.observed || '已完成回顧')}</p>`).join('') : '<div class="empty compact">還沒有本週回顧。</div>'}</div></section>`;
+}
+
+function renderKnowledge() {
+  const cards = [
+    { title: '運動時間與運動量', label: '來源型健康指引＋個人紀錄', definition: '記錄活動種類、實際分鐘與強度來源。運動計畫分鐘不能代替實際完成分鐘。', formula: '每週實際活動分鐘＝符合指定強度與類別的實際活動分鐘總和。', caution: '人口健康指引不是個人處方；分鐘數不能單獨推定強度或健康結果。', href: '../../knowledge/health-time/index.html' },
+    { title: '睡眠與清醒休息', label: '分開記錄', definition: '睡眠、臥床時間與清醒休息分開；跨午夜活動仍是一筆紀錄，統計依日期切分。', formula: '臥床區間 ≠ 睡眠時長；睡眠時長只在有相應資料時呈現。', caution: '未填睡眠資料顯示未知，不當成零，也不由工作產出推估睡眠。', href: '../../knowledge/health-time/index.html' },
+    { title: '玩樂與休閒', label: '工具操作定義', definition: '由使用者標記的自主休閒活動；不等於所有空閒或休息時間。', formula: '休閒分鐘＝使用者標記為休閒的實際活動分鐘總和。', caution: '時數不等於滿意度或幸福感，應分開記錄。' },
+    { title: '專注與當下意識', label: '自我回報，不作診斷', definition: '專注程度、走神察覺與主觀時間感分成不同欄位記錄。', formula: '有效專注自評平均＝有效自評分數總和 ÷ 有效回報筆數。', caution: '自評不等於客觀注意力測量；未填不視為低專注。' },
+    { title: '長區塊與零散時間', label: '個人門檻可調', definition: '長區塊依設定門檻辨認；短空檔需由使用者明確標記為可安排。', formula: '區塊分鐘＝連續起訖時間；中斷／恢復時間需分別記錄。', caution: '短時間不等於浪費；目前門檻是產品設定，不是研究定律。' },
+    { title: '外部期限與自訂期限', label: '來源分開保存', definition: '外部期限與個人設定目標日分開，保留原期限、變更和原因。', formula: '期限差＝期限時間 − 完成時間；正值表示提早，負值表示逾期。', caution: '自訂期限調整不必然代表拖延；系統不替使用者判斷期限真假。' }
+  ];
+  return `<div class="page-heading"><div><span class="eyebrow">定義、公式與使用限制</span><h1>公式與知識庫</h1><p>研究公式與工具衍生指標分開標示；每個數字都可回到原始紀錄核對。</p></div><input id="knowledge-search" class="search-input" placeholder="搜尋主題" value="${escapeHTML(searchText)}"></div>
+    <div class="knowledge-grid">${cards.filter(card => !searchText || `${card.title} ${card.definition} ${card.formula}`.toLowerCase().includes(searchText.toLowerCase())).map(card => `<article class="knowledge-card"><div class="knowledge-card-head"><span class="status-chip">${card.label}</span>${card.href ? `<a href="${card.href}" class="text-button">完整公式庫 ↗</a>` : ''}</div><h2>${card.title}</h2><p>${card.definition}</p><div class="formula-box"><b>目前指標</b><code>${card.formula}</code></div><p class="caution">注意：${card.caution}</p></article>`).join('')}</div>
+    <div class="evidence-note"><b>資料標示原則</b><span>研究原式、工具衍生指標與產品暫定定義分開呈現。樣本數不足或欄位缺漏時，顯示「資料不足」，不補猜測值。</span></div>`;
+}
+
+function renderData() {
+  return `<div class="page-heading"><div><span class="eyebrow">資料留在此瀏覽器</span><h1>匯入與設定</h1><p>目前不做雲端同步；匯入前會先檢查格式與重複資料。</p></div></div>
+    <section class="data-grid"><article class="panel"><div class="panel-heading"><div><h2>資料交換</h2><p>支援 JSON 備份、CSV 與 ICS 行事曆交換。</p></div></div><div class="action-stack"><button class="primary-button" data-action="export-json">下載 JSON 備份</button><button class="outline-button" data-action="export-ics">匯出 ICS 行事曆</button><button class="outline-button" data-action="export-csv">匯出 CSV 活動清單</button><button class="upload-button" type="button" data-action="choose-import-file">選擇 JSON／CSV／ICS 檔案</button><input id="import-file" class="visually-hidden-file-input" type="file" accept=".json,.csv,.ics,application/json,text/calendar,text/csv" aria-label="選擇 JSON、CSV 或 ICS 檔案"><p id="import-status" class="helper-text" role="status" aria-live="polite">尚未選擇檔案。</p><button class="outline-button" data-action="import-legacy">讀取此瀏覽器的舊版資料</button></div><p class="helper-text">匯入會先產生預覽，不會立刻覆蓋目前資料。重複項目需由你逐筆選擇。</p></article>
+      <article class="panel"><div class="panel-heading"><div><h2>個人設定</h2><p>時間門檻只影響標記與分析，不改變原始紀錄。</p></div></div><label class="setting-row">介面模式<select id="theme-setting" class="select-control"><option value="light" ${state.settings.theme === 'light' ? 'selected' : ''}>淺色</option><option value="dark" ${state.settings.theme === 'dark' ? 'selected' : ''}>深色</option></select></label><label class="setting-row">配色主題<select id="palette-setting" class="select-control">${[['frost','Apple 霧藍'],['fluent','Fluent 藍靛'],['material','Material 薰衣草'],['oneui','One UI 靜紫'],['meta','Meta 藍'],['chrono','Chrono 電藍']].map(([id,label]) => `<option value="${id}" ${state.settings.palette === id ? 'selected' : ''}>${label}</option>`).join('')}</select></label><label class="setting-row">預設排程時長（分鐘）<input id="default-block" type="number" min="15" max="240" step="15" value="${Number(state.settings.defaultBlockMinutes) || 30}"></label><label class="setting-row">長區塊門檻（分鐘）<input id="long-block" type="number" min="30" max="240" step="15" value="${Number(state.settings.longBlockMinutes) || 60}"></label><label class="setting-row">短空檔上限（分鐘）<input id="short-gap" type="number" min="5" max="60" step="5" value="${Number(state.settings.shortGapMaxMinutes) || 30}"></label><p class="helper-text">長區塊與短空檔門檻是可調的產品設定，不是研究標準。</p></article></section>
+    <section class="panel"><div class="panel-heading"><div><h2>目前資料概況</h2><p>刪除資料前請先下載 JSON。</p></div><button class="danger-button" data-action="clear-data">清除本機資料</button></div><div class="mini-metrics"><div><span>待辦</span><b>${state.tasks.length}</b></div><div><span>行程</span><b>${state.events.length}</b></div><div><span>實際紀錄</span><b>${state.actuals.length}</b></div><div><span>回顧</span><b>${state.reviews.length}</b></div></div></section>`;
+}
+
+function openEventDialog({ event = null, date = selectedDate, time = '09:00', task = null } = {}) {
+  const start = event?.start || `${date}T${time}`;
+  const defaultDuration = Math.max(15, Number(task?.estimatedMinutes) || Number(state.settings.defaultBlockMinutes) || 30);
+  const end = event?.end || `${date}T${timeOf(minutesOf(time) + defaultDuration)}`;
+  modalDraft = { event, task };
+  $('#overlay-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><div><span class="eyebrow">${event ? '修改活動' : task ? '安排待辦' : '快速新增'}</span><h2 id="modal-title">${event ? escapeHTML(event.title) : task ? `安排「${escapeHTML(task.title)}」` : '先記下來，時間可稍後安排'}</h2></div><button class="close-inspector" data-action="close-modal" aria-label="關閉">×</button></div>
+    <form id="event-form"><div class="form-grid"><label class="form-item full">標題<input required name="title" maxlength="120" value="${escapeHTML(event?.title || task?.title || '')}" placeholder="例如：整理課程筆記"></label>
+    <label class="form-item">類別<select name="category">${CATEGORIES.map(c => `<option value="${c.id}" ${(event?.category || task?.category || 'work') === c.id ? 'selected' : ''}>${c.label}</option>`).join('')}</select></label>
+    ${event ? `<div class="form-item"><span>記錄類型</span><input value="行程（排入日曆）" disabled></div>` : `<label class="form-item">記錄類型<select name="kind"><option value="task" ${!task ? 'selected' : ''}>待辦（未排時間）</option><option value="event" ${task ? 'selected' : ''}>行程（排入日曆）</option></select></label>`}
+    <label class="form-item date-fields">開始<input type="datetime-local" name="start" value="${start}"></label><label class="form-item date-fields">結束<input type="datetime-local" name="end" value="${end}"></label>
+    <label class="form-item">預估時長（分鐘）<input type="number" min="0" step="5" name="estimate" value="${event?.estimatedMinutes ?? task?.estimatedMinutes ?? defaultDuration}"></label>
+    <label class="form-item">狀態<select name="status">${TASK_STATUSES.map(s => `<option value="${s.id}" ${(event?.status || 'todo') === s.id ? 'selected' : ''}>${s.label}</option>`).join('')}</select></label>
+    <label class="form-item">期限種類<select name="deadlineKind"><option value="">沒有期限</option><option value="external" ${event?.deadlineKind === 'external' ? 'selected' : ''}>外部硬期限</option><option value="self" ${event?.deadlineKind === 'self' ? 'selected' : ''}>自訂期限</option></select></label>
+    <label class="form-item">期限日期<input type="date" name="deadline" value="${event?.deadline || task?.deadline || ''}"></label>
+    <label class="form-item recurrence-field">重複<select name="recurrence"><option value="none">不重複</option><option value="daily">每日</option><option value="weekly">每週</option><option value="monthly">每月</option></select></label>
+    ${event?.seriesId ? `<label class="form-item">套用範圍<select name="editScope"><option value="this">只改這次</option><option value="future">這次及之後</option><option value="all">整個系列</option></select></label>` : ''}
+    <label class="form-item full">備註<textarea name="notes" rows="3" maxlength="1000" placeholder="選填">${escapeHTML(event?.notes || task?.notes || '')}</textarea></label></div>
+    <div class="modal-actions"><button type="button" class="outline-button" data-action="close-modal">取消</button><button class="primary-button" type="submit">${event ? '儲存修改' : '儲存'}</button></div></form></section></div>`;
+  const form = $('#event-form');
+  const seriesRule = event?.seriesId ? state.events.find(item => item.seriesId === event.seriesId && item.recurrence)?.recurrence : null;
+  form.elements.recurrence.value = event?.recurrence?.frequency || seriesRule?.frequency || 'none';
+  const updateKindFields = () => {
+    const isTask = !event && !form.elements.kind ? false : form.elements.kind?.value === 'task';
+    form.querySelectorAll('.date-fields,.recurrence-field').forEach(el => el.classList.toggle('hidden', isTask));
+  };
+  updateKindFields();
+  form.elements.kind?.addEventListener('change', updateKindFields);
+  form.addEventListener('submit', onEventSubmit);
+}
+
+function onEventSubmit(event) {
+  event.preventDefault();
+  const form = event.currentTarget, data = new FormData(form);
+  const title = String(data.get('title') || '').trim();
+  const kind = data.get('kind');
+  if (!title) return notify('請輸入標題');
+  if (kind === 'event') {
+    const start = String(data.get('start')), end = normalizeEndDateTime(start, String(data.get('end')));
+    if (!start || !end || new Date(end) <= new Date(start)) return notify('結束時間必須晚於開始時間');
+    const input = normalizeEvent({ id: modalDraft?.event?.id, title, category: data.get('category'), start, end,
+      estimatedMinutes: Number(data.get('estimate')) || durationMinutes(fmtTime(start), fmtTime(end)), status: data.get('status'), deadline: data.get('deadline') || null,
+      deadlineKind: data.get('deadlineKind') || null, notes: data.get('notes'), taskId: modalDraft?.task?.id || modalDraft?.event?.taskId || null,
+      source: modalDraft?.event?.source || 'local', importedAt: modalDraft?.event?.importedAt || null,
+      seriesId: modalDraft?.event?.seriesId || null, recurrence: data.get('recurrence') === 'none' ? null : { frequency: data.get('recurrence'), interval: 1 } });
+    const conflicts = findConflicts(input, state.events, input.id);
+    if (conflicts.length) notify(`有 ${conflicts.length} 個重疊行程；已保留，你可以檢視後再調整`);
+    selectedEventId = input.id;
+    change(store => {
+      if (modalDraft?.event?.seriesId) {
+        const original = modalDraft.event, scope = data.get('editScope') || 'this';
+        const dayDelta = Math.round((new Date(`${input.start.slice(0,10)}T12:00`) - new Date(`${original.start.slice(0,10)}T12:00`)) / 86400000);
+        const duration = Math.max(1, Math.round((new Date(input.end) - new Date(input.start)) / 60000));
+        store.events = store.events.map(old => {
+          const inScope = old.seriesId === original.seriesId && (scope === 'all' || (scope === 'future' && old.start >= original.start) || (scope === 'this' && old.id === original.id));
+          if (!inScope) return old;
+          const oldDate = old.start.slice(0,10), targetDate = scope === 'this' ? input.start.slice(0,10) : addDays(oldDate, dayDelta);
+          const targetStart = `${targetDate}T${input.start.slice(11,16)}`;
+          const absoluteEnd = new Date(new Date(targetStart).getTime() + duration * 60000);
+          return { ...old, title: input.title, category: input.category, start: targetStart,
+            end: `${toISODate(absoluteEnd)}T${timeOf(absoluteEnd.getHours() * 60 + absoluteEnd.getMinutes())}`,
+            estimatedMinutes: input.estimatedMinutes, status: input.status, deadline: input.deadline, deadlineKind: input.deadlineKind,
+            deadlineSource: input.deadlineSource, notes: input.notes, updatedAt: new Date().toISOString() };
+        });
+      } else if (modalDraft?.event) store.events = store.events.map(old => old.id === input.id ? input : old);
+      else store.events.push(...createRecurringEvents(input));
+      if (modalDraft?.task) { const task = store.tasks.find(item => item.id === modalDraft.task.id); if (task) task.eventId = input.id; }
+    }, conflicts.length ? '行程已保存並標記重疊' : '行程已保存');
+  } else {
+    const taskId = modalDraft?.task?.id;
+    change(store => {
+      const task = { id: taskId || uid('task'), title, category: data.get('category'), estimatedMinutes: Number(data.get('estimate')) || 0,
+        deadline: data.get('deadline') || null, deadlineKind: data.get('deadlineKind') || null, status: data.get('status') || 'todo', notes: String(data.get('notes') || ''), eventId: null, createdAt: new Date().toISOString() };
+      if (taskId) store.tasks = store.tasks.map(old => old.id === taskId ? { ...old, ...task } : old); else store.tasks.unshift(task);
+    }, '待辦已保存');
+  }
+  $('#overlay-root').innerHTML = ''; modalDraft = null;
+}
+
+function openActualDialog(event) {
+  const actual = event ? null : null;
+  if (!event) return;
+  const date = event.start.slice(0, 10), start = event.start, end = event.end;
+  $('#overlay-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal" role="dialog" aria-modal="true"><div class="modal-header"><div><span class="eyebrow">實際紀錄</span><h2>${escapeHTML(event.title)}</h2></div><button class="close-inspector" data-action="close-modal">×</button></div><form id="actual-form"><div class="form-grid"><label class="form-item">實際開始<input required type="datetime-local" name="start" value="${start}"></label><label class="form-item">實際結束<input required type="datetime-local" name="end" value="${end}"></label><label class="form-item">完成狀態<select name="status"><option value="done">已完成</option><option value="partial">部分完成</option><option value="skipped">取消／略過</option></select></label><label class="form-item">專注（1–5）<select name="focus"><option value="">不填</option>${[1,2,3,4,5].map(n => `<option>${n}</option>`).join('')}</select></label><label class="form-item">精力（1–5）<select name="energy"><option value="">不填</option>${[1,2,3,4,5].map(n => `<option>${n}</option>`).join('')}</select></label><label class="form-item">當下意識<select name="awareness"><option value="">不填</option>${AWARENESS.map(x => `<option>${x}</option>`).join('')}</select></label><label class="form-item">主觀時間感<select name="timeFeel"><option value="">不填</option>${TIME_FEEL.map(x => `<option>${x}</option>`).join('')}</select></label><label class="form-item">中斷次數<input type="number" min="0" step="1" name="interruptions" value="0"></label><label class="form-item">中斷分鐘<input type="number" min="0" step="1" name="interruptionMinutes" value="0"></label><label class="form-item full">備註<textarea name="notes" rows="2"></textarea></label></div><div class="modal-actions"><button type="button" class="outline-button" data-action="close-modal">取消</button><button class="primary-button">保存實際紀錄</button></div></form></section></div>`;
+  $('#actual-form').addEventListener('submit', e => {
+    e.preventDefault(); const data = new FormData(e.currentTarget), s = String(data.get('start')), en = normalizeEndDateTime(s, String(data.get('end')));
+    if (new Date(en) <= new Date(s)) return notify('結束必須晚於開始');
+    const focus = data.get('focus') ? Number(data.get('focus')) : null, energy = data.get('energy') ? Number(data.get('energy')) : null;
+    const entry = normalizeActual({ eventId: event.id, title: event.title, category: event.category, start: s, end: en, status: data.get('status'),
+      focus, energy, awareness: data.get('awareness') || null, timeFeel: data.get('timeFeel') || null,
+      interruptions: Number(data.get('interruptions')), interruptionMinutes: Number(data.get('interruptionMinutes')), notes: data.get('notes') });
+    change(store => {
+      store.actuals.push(entry);
+      const current = store.events.find(x => x.id === event.id);
+      if (current) current.status = entry.status;
+      const linkedTask = store.tasks.find(x => x.eventId === event.id);
+      if (linkedTask) linkedTask.status = entry.status;
+    }, '實際紀錄已保存');
+    $('#overlay-root').innerHTML = '';
+  });
+}
+
+function openReviewDialog() {
+  const start = startOfWeek(selectedDate), end = addDays(start, 6);
+  $('#overlay-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal" role="dialog" aria-modal="true"><div class="modal-header"><div><span class="eyebrow">每週檢視</span><h2>${start} – ${end}</h2></div><button class="close-inspector" data-action="close-modal">×</button></div><form id="review-form"><div class="form-grid"><label class="form-item full">本週實際完成什麼？<textarea name="observed" rows="3"></textarea></label><label class="form-item full">主要差異或限制？<textarea name="constraints" rows="3"></textarea></label><label class="form-item full">下一步只調整哪一件事？<textarea name="nextAction" rows="2"></textarea></label><label class="form-item">回顧時間（分鐘）<input type="number" min="0" name="minutes" value="10"></label></div><div class="modal-actions"><button type="button" class="outline-button" data-action="close-modal">取消</button><button class="primary-button">完成回顧</button></div></form></section></div>`;
+  $('#review-form').addEventListener('submit', e => { e.preventDefault(); const d = new FormData(e.currentTarget); const review = { id: uid('review'), type: 'weekly', periodStart: start, periodEnd: end, observed: d.get('observed'), constraints: d.get('constraints'), nextAction: d.get('nextAction'), minutes: Number(d.get('minutes')) || 0, createdAt: new Date().toISOString() }; change(store => store.reviews.push(review), '週回顧已保存'); $('#overlay-root').innerHTML = ''; });
+}
+
+function openSuggestions(task) {
+  const dates = getWeekDates(selectedDate), suggestions = suggestSlots(task, state.events, state.settings, dates[0], 7, 3);
+  $('#overlay-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal" role="dialog" aria-modal="true"><div class="modal-header"><div><span class="eyebrow">排程建議 · 由你確認</span><h2>${escapeHTML(task.title)}</h2></div><button class="close-inspector" data-action="close-modal">×</button></div><p class="helper-text">依可用時間、預估時長與期限產生候選時段；固定行程不會被移動。</p>${suggestions.length ? `<div class="suggestion-list">${suggestions.map((slot, i) => `<button class="suggestion-option" data-action="choose-slot" data-task="${task.id}" data-start="${slot.start}" data-end="${slot.end}"><b>建議 ${i + 1}</b><span>${slot.start.replace('T',' ')} – ${fmtTime(slot.end)}</span><small>${fmtDuration(slot.minutes)}</small></button>`).join('')}</div>` : '<div class="empty">本週沒有符合時長和期限的空檔。可以手動縮短時長或延後日期。</div>'}<div class="modal-actions"><button class="outline-button" data-action="close-modal">稍後再排</button></div></section></div>`;
+}
+
+function openImportPreview(file, parsed) {
+  const rows = parsed.map(row => {
+    const duplicate = findDuplicate(row, state.events);
+    return { ...row, duplicate, decision: duplicate ? 'skip' : 'add' };
+  });
+  const extrasCount = pendingImportExtras.tasks.length + pendingImportExtras.actuals.length + pendingImportExtras.reviews.length + pendingImportExtras.goals.length;
+  $('#overlay-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal modal-wide" role="dialog" aria-modal="true"><div class="modal-header"><div><span class="eyebrow">匯入預覽 · ${escapeHTML(file.name)}</span><h2>${parsed.length} 筆行程${extrasCount ? `，另有 ${extrasCount} 筆待辦／實際紀錄／回顧／目標` : ''}，請檢查後確認</h2></div><button class="close-inspector" data-action="close-modal">×</button></div>${rows.length ? `<div class="import-table-wrap"><table class="import-table"><thead><tr><th>日期</th><th>活動</th><th>類別</th><th>重複檢查</th><th>處理</th></tr></thead><tbody>${rows.map((row, i) => `<tr><td>${escapeHTML(row.start?.slice(0,10) || '—')}</td><td>${escapeHTML(row.title)}</td><td>${categoryLabel(row.category)}</td><td>${row.duplicate ? `可能重複：${escapeHTML(row.duplicate.title)}` : '未發現'}</td><td><select class="import-decision" data-row="${i}"><option value="add" ${!row.duplicate ? 'selected' : ''}>新增</option><option value="skip" ${row.duplicate ? 'selected' : ''}>略過</option><option value="replace">覆蓋本機重複項</option></select></td></tr>`).join('')}</tbody></table></div>` : '<p class="helper-text">這份檔案沒有行程，會只匯入其他資料紀錄。</p>'}<div class="modal-actions"><button class="outline-button" data-action="close-modal">取消匯入</button><button class="primary-button" data-action="confirm-import">確認匯入</button></div></section></div>`;
+  $$('[data-row]').forEach(select => select.addEventListener('change', () => { rows[Number(select.dataset.row)].decision = select.value; }));
+  $('#overlay-root').dataset.importRows = JSON.stringify(rows);
+}
+
+function download(filename, content, type) {
+  const blob = new Blob([content], { type }); const url = URL.createObjectURL(blob); const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click(); setTimeout(() => URL.revokeObjectURL(url), 500);
+}
+
+function exportJSON() { download(`chrono-planner-${localToday()}.json`, JSON.stringify({ ...state, exportedAt: new Date().toISOString() }, null, 2), 'application/json;charset=utf-8'); notify('JSON 備份已下載'); }
+function exportCSV() {
+  const header = ['日期','標題','類別','開始日期時間','結束日期時間','狀態','期限','期限種類','備註'];
+  const rows = state.events.map(e => [e.start.slice(0,10),e.title,categoryLabel(e.category),e.start,e.end,TASK_STATUSES.find(s=>s.id===e.status)?.label || e.status,e.deadline || '',e.deadlineKind || '',e.notes || '']);
+  const csv = [header,...rows].map(row => row.map(value => `"${String(value).replaceAll('"','""')}"`).join(',')).join('\r\n');
+  download(`chrono-planner-${localToday()}.csv`, '\ufeff' + csv, 'text/csv;charset=utf-8'); notify('CSV 已下載');
+}
+function exportICS() {
+  const esc = value => String(value || '').replaceAll('\\','\\\\').replaceAll(';','\\;').replaceAll(',','\\,').replaceAll('\n','\\n');
+  const stamp = value => value.replaceAll('-','').replaceAll(':','');
+  const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Chrono Desk//Chrono Planner//ZH-TW','CALSCALE:GREGORIAN'];
+  for (const event of state.events) lines.push('BEGIN:VEVENT',`UID:${event.externalUid || `${event.id}@chronodesk`}`,`DTSTART:${stamp(event.start)}`,`DTEND:${stamp(event.end)}`,`SUMMARY:${esc(event.title)}`,`DESCRIPTION:${esc(`${categoryLabel(event.category)} ${event.notes || ''}`)}`,'END:VEVENT');
+  lines.push('END:VCALENDAR'); download(`chrono-planner-${localToday()}.ics`, lines.join('\r\n'), 'text/calendar;charset=utf-8'); notify('ICS 已下載');
+}
+
+function parseICS(text) {
+  const unfolded = text.replace(/\r?\n[ \t]/g, ''), blocks = unfolded.match(/BEGIN:VEVENT[\s\S]*?END:VEVENT/g) || [];
+  const unescape = value => value.replace(/\\n/gi,'\n').replace(/\\,/g,',').replace(/\\;/g,';').replace(/\\\\/g,'\\');
+  const dateValue = value => { const m = value.match(/(\d{4})(\d{2})(\d{2})T?(\d{2})?(\d{2})?/); return m ? `${m[1]}-${m[2]}-${m[3]}T${m[4] || '09'}:${m[5] || '00'}` : ''; };
+  return blocks.map(block => { const fields = {}; for (const line of block.split(/\r?\n/)) { const idx=line.indexOf(':'); if(idx<0)continue; const key=line.slice(0,idx).split(';')[0].toUpperCase(); if(['UID','DTSTART','DTEND','SUMMARY','DESCRIPTION'].includes(key))fields[key]=line.slice(idx+1); }
+    return normalizeImported({ title: unescape(fields.SUMMARY || '匯入活動'), start: dateValue(fields.DTSTART || ''), end: dateValue(fields.DTEND || ''), notes: unescape(fields.DESCRIPTION || ''), externalUid: fields.UID || null });
+  }).filter(row => row.start && row.end);
+}
+
+async function handleImportFile(file) {
+  const status = $('#import-status');
+  if (status) status.textContent = `正在讀取 ${file.name}…`;
+  try {
+    const text = typeof file.text === 'function' ? await file.text() : await new Promise((resolve, reject) => {
+      const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || '')); reader.onerror = () => reject(reader.error || new Error('檔案讀取失敗')); reader.readAsText(file);
+    });
+    let parsed; pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] };
+    const filename = file.name.toLowerCase();
+    if (filename.endsWith('.json')) {
+      const raw = JSON.parse(text);
+      if (raw && typeof raw === 'object' && !Array.isArray(raw) && Array.isArray(raw.events)) {
+        parsed = raw.events.map(event => normalizeEvent(event));
+        pendingImportExtras = {
+          tasks: Array.isArray(raw.tasks) ? raw.tasks : [], actuals: Array.isArray(raw.actuals) ? raw.actuals : [],
+          reviews: Array.isArray(raw.reviews) ? raw.reviews : [], goals: Array.isArray(raw.goals) ? raw.goals : []
+        };
+      }
+      else if (raw && Array.isArray(raw.tasks)) { const migrated = migrateLegacyState(raw); parsed = migrated.events; pendingImportExtras = { tasks: migrated.tasks, actuals: migrated.actuals, reviews: migrated.reviews, goals: migrated.goals }; }
+      else if (Array.isArray(raw)) parsed = raw.map(row => normalizeEvent(row));
+      else throw new Error('JSON 格式中找不到活動資料');
+    } else if (filename.endsWith('.ics')) parsed = parseICS(text);
+    else if (filename.endsWith('.csv')) parsed = parseCSV(text);
+    else throw new Error('目前只接受 JSON、CSV 或 ICS');
+    if (!parsed.length && !pendingImportExtras.tasks.length && !pendingImportExtras.actuals.length && !pendingImportExtras.reviews.length && !pendingImportExtras.goals.length) throw new Error('檔案中沒有可匯入的資料');
+    openImportPreview(file, parsed);
+    if (status) status.textContent = `已讀取 ${file.name}，請檢查預覽後確認。`;
+  } catch (error) {
+    pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] };
+    if (status) status.textContent = `匯入失敗：${error.message}`;
+    notify(`匯入失敗：${error.message}`);
+  }
+}
+
+function applyImport() {
+  const wrapper = $('#overlay-root'), decisions = JSON.parse(wrapper.dataset.importRows || '[]');
+  if (!decisions.length && !pendingImportExtras.tasks.length && !pendingImportExtras.actuals.length && !pendingImportExtras.reviews.length && !pendingImportExtras.goals.length) return notify('沒有可匯入的資料');
+  let summary;
+  change(store => { summary = mergeImportBatch(store, decisions, pendingImportExtras); }, '匯入資料已保存');
+  const total = summary.addedEvents + summary.replacedEvents + summary.addedTasks + summary.addedActuals + summary.addedReviews + summary.addedGoals;
+  notify(`匯入完成：${total} 筆資料已新增或更新`);
+  pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] };
+  wrapper.innerHTML = '';
+  const status = $('#import-status');
+  if (status) status.textContent = total ? `匯入完成：新增／更新 ${total} 筆資料。` : '沒有新增資料；選擇的項目皆已略過或已存在。';
+}
+
+function importLegacy() {
+  let raw;
+  try { raw = JSON.parse(localStorage.getItem('TIME_PRO_ENTERPRISE_V1') || 'null'); } catch { raw = null; }
+  if (!raw || !Array.isArray(raw.tasks)) return notify('此瀏覽器找不到舊版 Chrono Desk 資料');
+  const migrated = migrateLegacyState(raw);
+  $('#overlay-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal" role="dialog" aria-modal="true"><div class="modal-header"><div><span class="eyebrow">舊版資料預覽</span><h2>找到 ${migrated.events.length} 筆行程和 ${migrated.actuals.length} 筆實際紀錄</h2></div><button class="close-inspector" data-action="close-modal">×</button></div><p>舊版資料只會複製到新模組，不會刪除或修改舊資料。重複活動會先略過。</p><div class="modal-actions"><button class="outline-button" data-action="close-modal">取消</button><button class="primary-button" data-action="confirm-legacy">匯入到新模組</button></div></section></div>`;
+  $('#overlay-root')._legacyState = migrated;
+}
+
+function attachGlobalHandlers() {
+  document.addEventListener('click', event => {
+    const target = event.target.closest('[data-action], [data-page], [data-view], [data-date], [data-id]');
+    if (!target) return;
+    if (target.matches('[data-page]')) { currentPage = target.dataset.page; if (currentPage === 'import-calendar') viewMode = 'month'; selectedEventId = null; $('#sidebar').classList.remove('open'); render(); return; }
+    if (target.matches('[data-view]')) { viewMode = target.dataset.view; render(); return; }
+    if (target.matches('[data-date]') && !target.dataset.action) { selectedDate = target.dataset.date; if (window.matchMedia('(max-width: 700px)').matches) viewMode = 'day'; render(); return; }
+    const action = target.dataset.action, id = target.dataset.id;
+    if (!action) return;
+    if (action === 'prev' || action === 'next') {
+      const direction = action === 'prev' ? -1 : 1;
+      if (viewMode === 'month') { const date = parseDate(selectedDate); date.setDate(1); date.setMonth(date.getMonth() + direction); selectedDate = toISODate(date); }
+      else { const mobileSingleDay = window.matchMedia('(max-width: 540px)').matches && viewMode === 'week'; selectedDate = addDays(selectedDate, (viewMode === 'day' || mobileSingleDay ? 1 : 7) * direction); }
+      render();
+    }
+    if (action === 'today') { selectedDate = localToday(); render(); }
+    if (action === 'choose-import-file') $('#import-file')?.click();
+    if (action === 'mini-prev' || action === 'mini-next') { const d=parseDate(selectedDate); d.setDate(1); d.setMonth(d.getMonth()+(action==='mini-prev'?-1:1)); selectedDate=toISODate(d); render(); }
+    if (action === 'new-task') openEventDialog();
+    if (action === 'new-event') openEventDialog({ date: selectedDate });
+    if (action === 'new-at') openEventDialog({ date: target.dataset.date, time: target.dataset.time });
+    if (action === 'select-event') { selectedEventId = id; render(); }
+    if (action === 'clear-selection') { selectedEventId = null; render(); }
+    if (action === 'edit-event') { const item=state.events.find(x=>x.id===id); if(item)openEventDialog({event:item}); }
+    if (action === 'log-actual') openActualDialog(state.events.find(x=>x.id===id));
+    if (action === 'finish-event') openActualDialog(state.events.find(x=>x.id===id));
+    if (action === 'open-review') openReviewDialog();
+    if (action === 'suggest') { const task=state.tasks.find(x=>x.id===id); if(task)openSuggestions(task); }
+    if (action === 'choose-slot') {
+      const task=state.tasks.find(x=>x.id===target.dataset.task); if(task)openEventDialog({task,date:target.dataset.start.slice(0,10),time:target.dataset.start.slice(11,16)});
+      if(task){ const form=$('#event-form'); form.elements.end.value=target.dataset.end; form.elements.estimate.value=durationMinutes(target.dataset.start.slice(11,16),target.dataset.end.slice(11,16)); }
+    }
+    if (action === 'undo') undo();
+    if (action === 'close-modal') { if (target === event.target || target.classList.contains('close-inspector')) $('#overlay-root').innerHTML = ''; }
+    if (action === 'export-json') exportJSON();
+    if (action === 'export-csv') exportCSV();
+    if (action === 'export-ics') exportICS();
+    if (action === 'confirm-import') applyImport();
+    if (action === 'import-legacy') importLegacy();
+    if (action === 'confirm-legacy') { const legacy=$('#overlay-root')._legacyState; if(legacy)change(store=>{ const existing=new Set(store.events.map(e=>`${e.title}|${e.start}`)); store.events.push(...legacy.events.filter(e=>!existing.has(`${e.title}|${e.start}`))); store.actuals.push(...legacy.actuals); },'舊版資料已複製'); $('#overlay-root').innerHTML=''; }
+    if (action === 'clear-data') { if (confirm('確定清除 Chrono Planner 的本機資料？請先下載 JSON 備份。')) change(store=>{ Object.assign(store,emptyState()); },'本機資料已清除'); }
+    if (action === 'delete-event') {
+      const item=state.events.find(x=>x.id===id); if(!item)return;
+      const scope = item.seriesId ? prompt('輸入 1 刪除這次、2 刪除這次及之後、3 刪除整個系列', '1') : '1';
+      if (!scope || !confirm('確認刪除？此操作可按復原。')) return;
+      change(store=>{ const removedIds=new Set(store.events.filter(e=>e.id===id || item.seriesId&&e.seriesId===item.seriesId&&(scope==='3'||scope==='2'&&e.start>=item.start)).map(e=>e.id));store.events=store.events.filter(e=>!removedIds.has(e.id));store.actuals=store.actuals.filter(a=>!removedIds.has(a.eventId));store.tasks=store.tasks.map(task=>removedIds.has(task.eventId)?{...task,eventId:null}:task); },'行程已刪除'); selectedEventId=null;
+    }
+    if (action === 'edit-series') { const item=state.events.find(x=>x.id===id); if(item)openEventDialog({event:item}); }
+  });
+
+  document.addEventListener('input', event => {
+    if (event.target.id === 'calendar-search' || event.target.id === 'knowledge-search') { searchText = event.target.value; const position=event.target.selectionStart; render(); const next=$(`#${event.target.id}`); next?.focus(); next?.setSelectionRange(position,position); }
+  });
+  document.addEventListener('change', event => {
+    const target=event.target;
+    if(target.id==='category-filter'){filterCategory=target.value;render();}
+    if(target.id==='import-category-filter'){filterCategory=target.value;render();}
+    if(target.id==='event-status'&&selectedEventId){const value=target.value;change(store=>{const item=store.events.find(e=>e.id===selectedEventId);if(item)item.status=value;const task=store.tasks.find(entry=>entry.eventId===selectedEventId);if(task)task.status=value;},'狀態已更新');}
+    if(target.id==='import-file'&&target.files?.[0]){const file=target.files[0];target.value='';handleImportFile(file);}
+    if(target.id==='theme-setting'){change(store=>{store.settings.theme=target.value;},'介面模式已更新');}
+    if(target.id==='palette-setting'){change(store=>{store.settings.palette=target.value;},'配色已更新');}
+    if(target.id==='default-block'||target.id==='long-block'||target.id==='short-gap'){const key=target.id==='default-block'?'defaultBlockMinutes':target.id==='long-block'?'longBlockMinutes':'shortGapMaxMinutes';change(store=>{store.settings[key]=Number(target.value)||30;},'門檻已保存');}
+  });
+
+  document.addEventListener('dragstart', event => {
+    const task=event.target.closest('[data-drag-task]'), item=event.target.closest('[data-drag-event]');
+    if(task){event.dataTransfer.setData('text/task-id',task.dataset.dragTask);event.dataTransfer.effectAllowed='copy';}
+    if(item){event.dataTransfer.setData('text/event-id',item.dataset.dragEvent);event.dataTransfer.effectAllowed='move';}
+  });
+  document.addEventListener('dragover', event => { const column=event.target.closest('[data-drop-date]'); if(column){event.preventDefault();column.classList.add('drag-over');} });
+  document.addEventListener('dragleave', event => { const column=event.target.closest('[data-drop-date]'); if(column && !column.contains(event.relatedTarget))column.classList.remove('drag-over'); });
+  document.addEventListener('drop', event => {
+    const column=event.target.closest('[data-drop-date]'); if(!column)return; event.preventDefault();column.classList.remove('drag-over');
+    const taskId=event.dataTransfer.getData('text/task-id'), eventId=event.dataTransfer.getData('text/event-id');
+    if(taskId){const task=state.tasks.find(x=>x.id===taskId);if(task)openEventDialog({task,date:column.dataset.dropDate,time:'09:00'});}
+    if(eventId){const item=state.events.find(x=>x.id===eventId);if(!item||item.isFixed)return notify('固定行程無法拖曳修改');const rect=column.getBoundingClientRect(), hour=6, y=event.clientY-rect.top, minute=Math.max(0,Math.round(y/0.92/15)*15), date=column.dataset.dropDate, duration=durationMinutes(fmtTime(item.start),fmtTime(item.end)), start=`${date}T${timeOf(hour*60+minute)}`, endMinute=hour*60+minute+duration; const endDate=endMinute>=1440?addDays(date,1):date;const updated={...item,start,end:`${endDate}T${timeOf(endMinute)}`};const conflicts=findConflicts(updated,state.events,item.id);change(store=>{store.events=store.events.map(e=>e.id===item.id?updated:e);},conflicts.length?'已移動；請留意重疊行程':'已移動行程');}
+  });
+
+  document.addEventListener('keydown', event => { if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='z'){event.preventDefault();undo();} if(event.key==='Escape')$('#overlay-root').innerHTML=''; });
+  $('#mobile-menu').addEventListener('click',()=>$('#sidebar').classList.toggle('open'));
+}
+
+attachGlobalHandlers();
+render();
+persist('本機自動保存已啟用');
+
+})();
+</script>
+</body>
+</html>
