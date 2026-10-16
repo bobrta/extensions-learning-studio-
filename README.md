@@ -2,6 +2,13 @@
 
 這是一個以單一 HTML 檔案運作的 Vue 3 時間與專案管理儀表板。介面包含任務工作台、BI 圖表、公式指標、JSON 備份、CSV／ICS 行事曆交換與範本。
 
+## 研究知識庫（初步）
+
+已新增可獨立開啟的運動與睡眠／休息公式知識庫，包含 50 項運動公式、56 項睡眠／休息公式、兩個試算器、原則、注意事項、來源對照與 JSON 自訂條目匯入／匯出。它位於獨立子目錄，不會改動根目錄 Chrono Desk 主程式。
+
+- [開啟健康時間公式知識庫](knowledge/health-time/index.html)
+- [閱讀公式與證據規格](knowledge/health-time/docs/公式與證據規格.md)
+
 ## 開啟方式
 
 直接開啟 `index.html`，或在 GitHub Pages 啟用此儲存庫的 Pages（部署來源選 `main` 分支與根目錄）。頁面使用 CDN 載入 Vue 3、ECharts、Tailwind CSS、Lucide 與 html2pdf，因此需要網路連線。
