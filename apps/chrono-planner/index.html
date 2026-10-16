@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>Chrono Planner｜時間工作台</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><span class="brand-mark">◷</span><span class="brand-text">Chrono<br><small>PLANNER</small></span></div>
+      <button class="nav-item active" data-page="workbench"><span>▦</span><b>排程工作台</b></button>
+      <button class="nav-item" data-page="analytics"><span>▤</span><b>分析與回顧</b></button>
+      <button class="nav-item" data-page="knowledge"><span>⌕</span><b>公式與知識庫</b></button>
+      <button class="nav-item" data-page="data"><span>⇅</span><b>匯入與設定</b></button>
+      <div class="sidebar-bottom"><span class="save-state" id="save-state">本機資料已準備</span><button class="nav-item" data-action="undo" title="復原上一個操作"><span>↶</span><b>復原</b></button></div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="topbar-title"><button class="mobile-menu" id="mobile-menu" aria-label="開啟導覽">☰</button><span class="eyebrow">個人時間管理</span><strong id="page-title">排程工作台</strong></div>
+        <div class="topbar-actions"><button class="icon-button" data-action="today">今天</button><button class="icon-button" data-action="prev" aria-label="上一個期間">‹</button><button class="icon-button" data-action="next" aria-label="下一個期間">›</button><strong id="range-label" class="range-label"></strong><button class="primary-button" data-action="new-task">＋ 快速新增</button></div>
+      </header>
+      <div class="page-content" id="page-content"></div>
+    </main>
+    <div id="overlay-root"></div>
+    <div class="toast" id="toast" aria-live="polite"></div>
+  </div>
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
