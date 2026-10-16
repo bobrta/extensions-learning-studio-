@@ -112,7 +112,7 @@ export function mergeImportBatch(store, rows, extras = {}) {
   let addedEvents = 0;
   let replacedEvents = 0;
   for (const { row, targetId, existingId } of eventActions) {
-    const event = normalizeImported({ ...row, id: targetId, taskId: taskIds.get(row.taskId) || store.tasks.find(item => item.id === row.taskId)?.id || null });
+    const event = normalizeImported({ ...row, id: targetId, importedAt: row.importedAt || new Date().toISOString(), taskId: taskIds.get(row.taskId) || store.tasks.find(item => item.id === row.taskId)?.id || null });
     if (existingId) {
       store.events = store.events.map(item => item.id === existingId ? event : item);
       replacedEvents++;

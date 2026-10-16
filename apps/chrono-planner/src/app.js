@@ -94,14 +94,44 @@ function render() {
   document.body.dataset.theme = state.settings.theme || 'light';
   document.body.dataset.palette = state.settings.palette || 'frost';
   $$('.nav-item[data-page]').forEach(button => button.classList.toggle('active', button.dataset.page === currentPage));
-  $('#page-title').textContent = ({ workbench: '排程工作台', analytics: '分析與回顧', knowledge: '公式與知識庫', data: '匯入與設定' })[currentPage];
+  $('#page-title').textContent = ({ workbench: '排程工作台', 'import-calendar': '匯入日曆', analytics: '分析與回顧', knowledge: '公式與知識庫', data: '匯入與設定' })[currentPage];
   updateRangeLabel();
   const root = $('#page-content');
   if (currentPage === 'workbench') root.innerHTML = renderWorkbench();
+  if (currentPage === 'import-calendar') root.innerHTML = renderImportedCalendar();
   if (currentPage === 'analytics') root.innerHTML = renderAnalytics();
   if (currentPage === 'knowledge') root.innerHTML = renderKnowledge();
   if (currentPage === 'data') root.innerHTML = renderData();
   if (selectedEventId && !state.events.some(event => event.id === selectedEventId)) selectedEventId = null;
+}
+
+function importedEvents() {
+  return state.events.filter(event => Boolean(event.importedAt) || event.source === 'imported' || event.source === 'legacy');
+}
+
+function renderImportedCalendar() {
+  const dates = selectedPeriodDates();
+  const rows = importedEvents();
+  const categories = CATEGORIES.map(category => ({ ...category, count: rows.filter(event => event.category === category.id).length })).filter(category => category.count);
+  const date = parseDate(selectedDate);
+  return `<section class="import-calendar-layout">
+    <aside class="import-calendar-rail">
+      <div class="rail-card mini-calendar"><div class="rail-heading"><strong>日期</strong><div><button class="tiny-button" data-action="mini-prev" aria-label="上個月">‹</button><button class="tiny-button" data-action="mini-next" aria-label="下個月">›</button></div></div>${renderMiniCalendar()}</div>
+      <div class="rail-card imported-sources"><div class="rail-heading"><strong>匯入的日曆</strong><span class="count-pill">${rows.length}</span></div><div class="source-calendar-row"><i></i><span>匯入行程</span><b>${rows.length}</b></div>${categories.map(category => `<div class="source-category-row"><i style="--category:${category.color}"></i><span>${category.label}</span><b>${category.count}</b></div>`).join('')}${rows.length ? '' : '<p class="helper-text">匯入完成後，行程會顯示在這裡。</p>'}<button class="text-button" data-page="data">匯入或管理資料 →</button></div>
+    </aside>
+    <section class="import-calendar-area"><div class="import-calendar-toolbar"><div><span class="eyebrow">${rows.length} 筆匯入行程</span><h1>${date.getFullYear()} 年 ${date.getMonth() + 1} 月</h1></div><div class="calendar-filters"><select id="import-category-filter" class="select-control"><option value="all">所有分類</option>${CATEGORIES.map(c => `<option value="${c.id}" ${filterCategory === c.id ? 'selected' : ''}>${c.label}</option>`).join('')}</select><button class="outline-button" data-action="today">今天</button><button class="icon-button" data-action="prev" aria-label="上個月">‹</button><button class="icon-button" data-action="next" aria-label="下個月">›</button></div></div>
+      ${renderImportedMonthGrid(dates, rows)}
+      <div class="import-calendar-foot"><span><i></i>匯入行程</span><span>選取行程可查看來源、時間與備註</span></div>
+    </section><aside class="inspector import-inspector" id="inspector">${renderInspector()}</aside>
+  </section>`;
+}
+
+function renderImportedMonthGrid(dates, events) {
+  const weekdays = ['一','二','三','四','五','六','日'];
+  return `<div class="import-month-grid"><div class="import-month-weekdays">${weekdays.map(day => `<span>${day}</span>`).join('')}</div><div class="import-month-days">${dates.map(date => {
+    const dayEvents = events.filter(event => splitAcrossDates(event).some(part => part.date === date) && (filterCategory === 'all' || event.category === filterCategory));
+    return `<div class="import-month-day ${date === localToday() ? 'today' : ''} ${date === selectedDate ? 'chosen' : ''} ${date.slice(0,7) !== selectedDate.slice(0,7) ? 'outside' : ''}"><button class="import-day-number" data-date="${date}">${Number(date.slice(8,10))}</button><div class="import-day-events">${dayEvents.slice(0,5).map(event => `<button class="import-month-event ${selectedEventId === event.id ? 'selected' : ''}" style="--category:${categoryColor(event.category)}" data-action="select-event" data-id="${escapeHTML(event.id)}"><span>${fmtTime(event.start)}</span><b>${escapeHTML(event.title)}</b></button>`).join('')}${dayEvents.length > 5 ? `<span class="import-more">還有 ${dayEvents.length - 5} 筆</span>` : ''}</div></div>`;
+  }).join('')}</div></div>`;
 }
 
 function renderWorkbench() {
@@ -191,12 +221,12 @@ function renderInspector() {
   const actuals = state.actuals.filter(actual => actual.eventId === event.id);
   const actualMinutes = actuals.reduce((sum, actual) => sum + splitAcrossDates(actual).reduce((n, segment) => n + segment.minutes, 0), 0);
   return `<div class="inspector-head"><span class="eyebrow">活動詳情</span><button class="close-inspector" data-action="clear-selection" aria-label="關閉詳情">×</button></div>
-    <div class="inspector-color" style="--category:${categoryColor(event.category)}"></div><h2>${escapeHTML(event.title)}</h2><div class="inspector-meta"><span>${categoryLabel(event.category)}</span><span>${event.start.slice(0,10)}</span><span>${fmtTime(event.start)}–${fmtTime(event.end)}</span></div>
+    <div class="inspector-color" style="--category:${categoryColor(event.category)}"></div><h2>${escapeHTML(event.title)}</h2><div class="inspector-meta"><span>${categoryLabel(event.category)}</span><span>${event.start.slice(0,10)}</span><span>${fmtTime(event.start)}–${fmtTime(event.end)}</span>${event.importedAt || event.source === 'imported' || event.source === 'legacy' ? `<span>來源：匯入資料</span>` : ''}</div>
     <div class="inspector-section"><span>計畫時長</span><strong>${fmtDuration(Math.max(0, durationMinutes(fmtTime(event.start), fmtTime(event.end))))}</strong></div>
     <div class="inspector-section"><span>實際紀錄</span><strong>${actuals.length ? fmtDuration(actualMinutes) : '尚未記錄'}</strong></div>
     <div class="inspector-section"><span>狀態</span><select id="event-status" class="select-control">${TASK_STATUSES.map(s => `<option value="${s.id}" ${event.status === s.id ? 'selected' : ''}>${s.label}</option>`).join('')}</select></div>
     ${event.deadline ? `<div class="inspector-section"><span>${event.deadlineKind === 'external' ? '外部硬期限' : '自訂期限'}</span><strong>${escapeHTML(event.deadline)}</strong></div>` : ''}
-    ${event.notes ? `<p class="inspector-notes">${escapeHTML(event.notes)}</p>` : ''}
+    ${event.notes ? `<p class="inspector-notes">${escapeHTML(event.notes)}</p>` : ''}${event.importedAt ? `<p class="helper-text">匯入時間：${new Date(event.importedAt).toLocaleString('zh-TW')}</p>` : ''}
     <div class="inspector-actions"><button class="outline-button" data-action="edit-event" data-id="${event.id}">編輯</button><button class="outline-button" data-action="log-actual" data-id="${event.id}">記錄實際</button>${event.seriesId ? `<button class="outline-button" data-action="edit-series" data-id="${event.id}">修改重複行程</button>` : ''}<button class="danger-button" data-action="delete-event" data-id="${event.id}">刪除</button></div>
     ${actuals.length ? `<div class="actual-list"><strong>實際紀錄</strong>${actuals.map(actual => `<div><span>${actual.start.slice(0,10)} ${fmtTime(actual.start)}–${fmtTime(actual.end)}</span><small>${actual.focus ? `專注 ${actual.focus}/5` : '未填專注'}${actual.awareness ? ` · ${actual.awareness}` : ''}</small></div>`).join('')}</div>` : ''}`;
 }
@@ -277,6 +307,7 @@ function onEventSubmit(event) {
     const input = normalizeEvent({ id: modalDraft?.event?.id, title, category: data.get('category'), start, end,
       estimatedMinutes: Number(data.get('estimate')) || durationMinutes(fmtTime(start), fmtTime(end)), status: data.get('status'), deadline: data.get('deadline') || null,
       deadlineKind: data.get('deadlineKind') || null, notes: data.get('notes'), taskId: modalDraft?.task?.id || modalDraft?.event?.taskId || null,
+      source: modalDraft?.event?.source || 'local', importedAt: modalDraft?.event?.importedAt || null,
       seriesId: modalDraft?.event?.seriesId || null, recurrence: data.get('recurrence') === 'none' ? null : { frequency: data.get('recurrence'), interval: 1 } });
     const conflicts = findConflicts(input, state.events, input.id);
     if (conflicts.length) notify(`有 ${conflicts.length} 個重疊行程；已保留，你可以檢視後再調整`);
@@ -446,7 +477,7 @@ function attachGlobalHandlers() {
   document.addEventListener('click', event => {
     const target = event.target.closest('[data-action], [data-page], [data-view], [data-date], [data-id]');
     if (!target) return;
-    if (target.matches('[data-page]')) { currentPage = target.dataset.page; selectedEventId = null; $('#sidebar').classList.remove('open'); render(); return; }
+    if (target.matches('[data-page]')) { currentPage = target.dataset.page; if (currentPage === 'import-calendar') viewMode = 'month'; selectedEventId = null; $('#sidebar').classList.remove('open'); render(); return; }
     if (target.matches('[data-view]')) { viewMode = target.dataset.view; render(); return; }
     if (target.matches('[data-date]') && !target.dataset.action) { selectedDate = target.dataset.date; if (window.matchMedia('(max-width: 700px)').matches) viewMode = 'day'; render(); return; }
     const action = target.dataset.action, id = target.dataset.id;
@@ -498,6 +529,7 @@ function attachGlobalHandlers() {
   document.addEventListener('change', event => {
     const target=event.target;
     if(target.id==='category-filter'){filterCategory=target.value;render();}
+    if(target.id==='import-category-filter'){filterCategory=target.value;render();}
     if(target.id==='event-status'&&selectedEventId){const value=target.value;change(store=>{const item=store.events.find(e=>e.id===selectedEventId);if(item)item.status=value;const task=store.tasks.find(entry=>entry.eventId===selectedEventId);if(task)task.status=value;},'狀態已更新');}
     if(target.id==='import-file'&&target.files?.[0]){const file=target.files[0];target.value='';handleImportFile(file);}
     if(target.id==='theme-setting'){change(store=>{store.settings.theme=target.value;},'介面模式已更新');}

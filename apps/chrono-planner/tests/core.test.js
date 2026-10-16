@@ -77,6 +77,12 @@ test('sample JSON import preserves linked tasks, events, and actual records', ()
   assert.equal(state.events.find(event => event.id === 'sample-event-focus').taskId, 'sample-task-linked');
   assert.equal(state.actuals[0].eventId, 'sample-event-leisure');
   assert.equal(state.events.find(event => event.id === 'sample-event-sleep').status, 'todo');
+  assert.ok(state.events.every(event => Number.isFinite(Date.parse(event.importedAt))));
+});
+
+test('normalizing an imported event retains its import marker for later editing', () => {
+  const marker = '2026-10-16T08:00:00.000Z';
+  assert.equal(normalizeEvent({ title: '匯入行程', importedAt: marker }).importedAt, marker);
 });
 
 test('reimporting the same sample skips duplicate content without creating broken links', () => {

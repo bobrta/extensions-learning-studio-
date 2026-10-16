@@ -59,7 +59,7 @@ export function normalizeEvent(input = {}) {
     deadline: input.deadline || null, deadlineKind: input.deadlineKind || null, deadlineSource: input.deadlineSource || '',
     estimatedMinutes: Number.isFinite(Number(input.estimatedMinutes)) ? Number(input.estimatedMinutes) : durationMinutes(start.slice(11, 16), end.slice(11, 16)),
     notes: String(input.notes || ''), seriesId: input.seriesId || null, recurrence: input.recurrence || null,
-    externalUid: input.externalUid || null, source: input.source || 'local',
+    externalUid: input.externalUid || null, source: input.source || 'local', importedAt: input.importedAt || null,
     occurrenceDate: input.occurrenceDate || start.slice(0, 10), isFixed: Boolean(input.isFixed), createdAt: input.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString()
   };
 }
