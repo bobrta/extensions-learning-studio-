@@ -1,10 +1,11 @@
 import {
   AWARENESS, CATEGORIES, STORAGE_KEY, TASK_STATUSES, TIME_FEEL, addDays, categoryColor, categoryLabel,
   dateRange, durationMinutes, emptyState, minutesOf, normalizeActual, normalizeEvent, parseDate, startOfWeek,
-  timeOf, toISODate, uid, migrateLegacyState
+  timeOf, toISODate, uid, migrateLegacyState, normalizeEndDateTime
 } from './model.js';
 import { createRecurringEvents, findConflicts, getWeekDates, suggestSlots, splitAcrossDates } from './scheduler.js';
 import { estimateError, summarizeByCategory, summarizePeriod } from './analytics.js';
+import { findDuplicate, mergeImportBatch, normalizeImported, parseCSV } from './importer.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -229,7 +230,7 @@ function renderKnowledge() {
 
 function renderData() {
   return `<div class="page-heading"><div><span class="eyebrow">資料留在此瀏覽器</span><h1>匯入與設定</h1><p>目前不做雲端同步；匯入前會先檢查格式與重複資料。</p></div></div>
-    <section class="data-grid"><article class="panel"><div class="panel-heading"><div><h2>資料交換</h2><p>支援 JSON 備份、CSV 與 ICS 行事曆交換。</p></div></div><div class="action-stack"><button class="primary-button" data-action="export-json">下載 JSON 備份</button><button class="outline-button" data-action="export-ics">匯出 ICS 行事曆</button><button class="outline-button" data-action="export-csv">匯出 CSV 活動清單</button><label class="upload-button">選擇 JSON／CSV／ICS 檔案<input id="import-file" type="file" accept=".json,.csv,.ics,application/json,text/calendar,text/csv"></label><button class="outline-button" data-action="import-legacy">讀取此瀏覽器的舊版資料</button></div><p class="helper-text">匯入會先產生預覽，不會立刻覆蓋目前資料。重複項目需由你逐筆選擇。</p></article>
+    <section class="data-grid"><article class="panel"><div class="panel-heading"><div><h2>資料交換</h2><p>支援 JSON 備份、CSV 與 ICS 行事曆交換。</p></div></div><div class="action-stack"><button class="primary-button" data-action="export-json">下載 JSON 備份</button><button class="outline-button" data-action="export-ics">匯出 ICS 行事曆</button><button class="outline-button" data-action="export-csv">匯出 CSV 活動清單</button><button class="upload-button" type="button" data-action="choose-import-file">選擇 JSON／CSV／ICS 檔案</button><input id="import-file" class="visually-hidden-file-input" type="file" accept=".json,.csv,.ics,application/json,text/calendar,text/csv" aria-label="選擇 JSON、CSV 或 ICS 檔案"><p id="import-status" class="helper-text" role="status" aria-live="polite">尚未選擇檔案。</p><button class="outline-button" data-action="import-legacy">讀取此瀏覽器的舊版資料</button></div><p class="helper-text">匯入會先產生預覽，不會立刻覆蓋目前資料。重複項目需由你逐筆選擇。</p></article>
       <article class="panel"><div class="panel-heading"><div><h2>個人設定</h2><p>時間門檻只影響標記與分析，不改變原始紀錄。</p></div></div><label class="setting-row">介面模式<select id="theme-setting" class="select-control"><option value="light" ${state.settings.theme === 'light' ? 'selected' : ''}>淺色</option><option value="dark" ${state.settings.theme === 'dark' ? 'selected' : ''}>深色</option></select></label><label class="setting-row">配色主題<select id="palette-setting" class="select-control">${[['frost','Apple 霧藍'],['fluent','Fluent 藍靛'],['material','Material 薰衣草'],['oneui','One UI 靜紫'],['meta','Meta 藍'],['chrono','Chrono 電藍']].map(([id,label]) => `<option value="${id}" ${state.settings.palette === id ? 'selected' : ''}>${label}</option>`).join('')}</select></label><label class="setting-row">預設排程時長（分鐘）<input id="default-block" type="number" min="15" max="240" step="15" value="${Number(state.settings.defaultBlockMinutes) || 30}"></label><label class="setting-row">長區塊門檻（分鐘）<input id="long-block" type="number" min="30" max="240" step="15" value="${Number(state.settings.longBlockMinutes) || 60}"></label><label class="setting-row">短空檔上限（分鐘）<input id="short-gap" type="number" min="5" max="60" step="5" value="${Number(state.settings.shortGapMaxMinutes) || 30}"></label><p class="helper-text">長區塊與短空檔門檻是可調的產品設定，不是研究標準。</p></article></section>
     <section class="panel"><div class="panel-heading"><div><h2>目前資料概況</h2><p>刪除資料前請先下載 JSON。</p></div><button class="danger-button" data-action="clear-data">清除本機資料</button></div><div class="mini-metrics"><div><span>待辦</span><b>${state.tasks.length}</b></div><div><span>行程</span><b>${state.events.length}</b></div><div><span>實際紀錄</span><b>${state.actuals.length}</b></div><div><span>回顧</span><b>${state.reviews.length}</b></div></div></section>`;
 }
@@ -271,7 +272,7 @@ function onEventSubmit(event) {
   const kind = data.get('kind');
   if (!title) return notify('請輸入標題');
   if (kind === 'event') {
-    const start = String(data.get('start')), end = String(data.get('end'));
+    const start = String(data.get('start')), end = normalizeEndDateTime(start, String(data.get('end')));
     if (!start || !end || new Date(end) <= new Date(start)) return notify('結束時間必須晚於開始時間');
     const input = normalizeEvent({ id: modalDraft?.event?.id, title, category: data.get('category'), start, end,
       estimatedMinutes: Number(data.get('estimate')) || durationMinutes(fmtTime(start), fmtTime(end)), status: data.get('status'), deadline: data.get('deadline') || null,
@@ -317,7 +318,7 @@ function openActualDialog(event) {
   const date = event.start.slice(0, 10), start = event.start, end = event.end;
   $('#overlay-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal" role="dialog" aria-modal="true"><div class="modal-header"><div><span class="eyebrow">實際紀錄</span><h2>${escapeHTML(event.title)}</h2></div><button class="close-inspector" data-action="close-modal">×</button></div><form id="actual-form"><div class="form-grid"><label class="form-item">實際開始<input required type="datetime-local" name="start" value="${start}"></label><label class="form-item">實際結束<input required type="datetime-local" name="end" value="${end}"></label><label class="form-item">完成狀態<select name="status"><option value="done">已完成</option><option value="partial">部分完成</option><option value="skipped">取消／略過</option></select></label><label class="form-item">專注（1–5）<select name="focus"><option value="">不填</option>${[1,2,3,4,5].map(n => `<option>${n}</option>`).join('')}</select></label><label class="form-item">精力（1–5）<select name="energy"><option value="">不填</option>${[1,2,3,4,5].map(n => `<option>${n}</option>`).join('')}</select></label><label class="form-item">當下意識<select name="awareness"><option value="">不填</option>${AWARENESS.map(x => `<option>${x}</option>`).join('')}</select></label><label class="form-item">主觀時間感<select name="timeFeel"><option value="">不填</option>${TIME_FEEL.map(x => `<option>${x}</option>`).join('')}</select></label><label class="form-item">中斷次數<input type="number" min="0" step="1" name="interruptions" value="0"></label><label class="form-item">中斷分鐘<input type="number" min="0" step="1" name="interruptionMinutes" value="0"></label><label class="form-item full">備註<textarea name="notes" rows="2"></textarea></label></div><div class="modal-actions"><button type="button" class="outline-button" data-action="close-modal">取消</button><button class="primary-button">保存實際紀錄</button></div></form></section></div>`;
   $('#actual-form').addEventListener('submit', e => {
-    e.preventDefault(); const data = new FormData(e.currentTarget), s = String(data.get('start')), en = String(data.get('end'));
+    e.preventDefault(); const data = new FormData(e.currentTarget), s = String(data.get('start')), en = normalizeEndDateTime(s, String(data.get('end')));
     if (new Date(en) <= new Date(s)) return notify('結束必須晚於開始');
     const focus = data.get('focus') ? Number(data.get('focus')) : null, energy = data.get('energy') ? Number(data.get('energy')) : null;
     const entry = normalizeActual({ eventId: event.id, title: event.title, category: event.category, start: s, end: en, status: data.get('status'),
@@ -347,25 +348,13 @@ function openSuggestions(task) {
 
 function openImportPreview(file, parsed) {
   const rows = parsed.map(row => {
-    const duplicate = findDuplicate(row, state);
+    const duplicate = findDuplicate(row, state.events);
     return { ...row, duplicate, decision: duplicate ? 'skip' : 'add' };
   });
-  const extrasCount = pendingImportExtras.tasks.length + pendingImportExtras.actuals.length + pendingImportExtras.reviews.length;
-  $('#overlay-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal modal-wide" role="dialog" aria-modal="true"><div class="modal-header"><div><span class="eyebrow">匯入預覽 · ${escapeHTML(file.name)}</span><h2>${parsed.length} 筆行程${extrasCount ? `，另有 ${extrasCount} 筆待辦／實際紀錄／回顧` : ''}，請檢查後確認</h2></div><button class="close-inspector" data-action="close-modal">×</button></div><div class="import-table-wrap"><table class="import-table"><thead><tr><th>日期</th><th>活動</th><th>類別</th><th>重複檢查</th><th>處理</th></tr></thead><tbody>${rows.map((row, i) => `<tr><td>${escapeHTML(row.start?.slice(0,10) || '—')}</td><td>${escapeHTML(row.title)}</td><td>${categoryLabel(row.category)}</td><td>${row.duplicate ? `可能重複：${escapeHTML(row.duplicate.title)}` : '未發現'}</td><td><select class="import-decision" data-row="${i}"><option value="add" ${!row.duplicate ? 'selected' : ''}>新增</option><option value="skip" ${row.duplicate ? 'selected' : ''}>略過</option><option value="replace">覆蓋本機重複項</option></select></td></tr>`).join('')}</tbody></table></div><div class="modal-actions"><button class="outline-button" data-action="close-modal">取消匯入</button><button class="primary-button" data-action="confirm-import">確認匯入</button></div></section></div>`;
+  const extrasCount = pendingImportExtras.tasks.length + pendingImportExtras.actuals.length + pendingImportExtras.reviews.length + pendingImportExtras.goals.length;
+  $('#overlay-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal modal-wide" role="dialog" aria-modal="true"><div class="modal-header"><div><span class="eyebrow">匯入預覽 · ${escapeHTML(file.name)}</span><h2>${parsed.length} 筆行程${extrasCount ? `，另有 ${extrasCount} 筆待辦／實際紀錄／回顧／目標` : ''}，請檢查後確認</h2></div><button class="close-inspector" data-action="close-modal">×</button></div>${rows.length ? `<div class="import-table-wrap"><table class="import-table"><thead><tr><th>日期</th><th>活動</th><th>類別</th><th>重複檢查</th><th>處理</th></tr></thead><tbody>${rows.map((row, i) => `<tr><td>${escapeHTML(row.start?.slice(0,10) || '—')}</td><td>${escapeHTML(row.title)}</td><td>${categoryLabel(row.category)}</td><td>${row.duplicate ? `可能重複：${escapeHTML(row.duplicate.title)}` : '未發現'}</td><td><select class="import-decision" data-row="${i}"><option value="add" ${!row.duplicate ? 'selected' : ''}>新增</option><option value="skip" ${row.duplicate ? 'selected' : ''}>略過</option><option value="replace">覆蓋本機重複項</option></select></td></tr>`).join('')}</tbody></table></div>` : '<p class="helper-text">這份檔案沒有行程，會只匯入其他資料紀錄。</p>'}<div class="modal-actions"><button class="outline-button" data-action="close-modal">取消匯入</button><button class="primary-button" data-action="confirm-import">確認匯入</button></div></section></div>`;
   $$('[data-row]').forEach(select => select.addEventListener('change', () => { rows[Number(select.dataset.row)].decision = select.value; }));
   $('#overlay-root').dataset.importRows = JSON.stringify(rows);
-}
-
-function findDuplicate(row, store) {
-  if (row.externalUid) return store.events.find(event => event.externalUid === row.externalUid) || null;
-  return store.events.find(event => event.title.trim().toLowerCase() === row.title.trim().toLowerCase() && event.start === row.start && event.end === row.end) || null;
-}
-
-function normalizeImported(row) {
-  const categoryInput = String(row.category || 'other').trim();
-  const category = CATEGORIES.find(item => item.id === categoryInput || item.label === categoryInput)?.id || 'other';
-  return normalizeEvent({ title: row.title, category, start: row.start, end: row.end, notes: row.notes || '',
-    externalUid: row.externalUid || null, source: 'imported', status: 'todo', estimatedMinutes: row.estimatedMinutes });
 }
 
 function download(filename, content, type) {
@@ -375,8 +364,8 @@ function download(filename, content, type) {
 
 function exportJSON() { download(`chrono-planner-${localToday()}.json`, JSON.stringify({ ...state, exportedAt: new Date().toISOString() }, null, 2), 'application/json;charset=utf-8'); notify('JSON 備份已下載'); }
 function exportCSV() {
-  const header = ['日期','標題','類別','開始','結束','狀態','期限','期限種類','備註'];
-  const rows = state.events.map(e => [e.start.slice(0,10),e.title,categoryLabel(e.category),fmtTime(e.start),fmtTime(e.end),TASK_STATUSES.find(s=>s.id===e.status)?.label || e.status,e.deadline || '',e.deadlineKind || '',e.notes || '']);
+  const header = ['日期','標題','類別','開始日期時間','結束日期時間','狀態','期限','期限種類','備註'];
+  const rows = state.events.map(e => [e.start.slice(0,10),e.title,categoryLabel(e.category),e.start,e.end,TASK_STATUSES.find(s=>s.id===e.status)?.label || e.status,e.deadline || '',e.deadlineKind || '',e.notes || '']);
   const csv = [header,...rows].map(row => row.map(value => `"${String(value).replaceAll('"','""')}"`).join(',')).join('\r\n');
   download(`chrono-planner-${localToday()}.csv`, '\ufeff' + csv, 'text/csv;charset=utf-8'); notify('CSV 已下載');
 }
@@ -386,13 +375,6 @@ function exportICS() {
   const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Chrono Desk//Chrono Planner//ZH-TW','CALSCALE:GREGORIAN'];
   for (const event of state.events) lines.push('BEGIN:VEVENT',`UID:${event.externalUid || `${event.id}@chronodesk`}`,`DTSTART:${stamp(event.start)}`,`DTEND:${stamp(event.end)}`,`SUMMARY:${esc(event.title)}`,`DESCRIPTION:${esc(`${categoryLabel(event.category)} ${event.notes || ''}`)}`,'END:VEVENT');
   lines.push('END:VCALENDAR'); download(`chrono-planner-${localToday()}.ics`, lines.join('\r\n'), 'text/calendar;charset=utf-8'); notify('ICS 已下載');
-}
-
-function parseCSV(text) {
-  const rows = [], lines = text.replace(/^\ufeff/, '').split(/\r?\n/).filter(Boolean);
-  for (const line of lines) { const cells = []; let value = '', quote = false; for (let i = 0; i < line.length; i++) { const ch = line[i]; if (ch === '"' && quote && line[i+1] === '"') { value += '"'; i++; } else if (ch === '"') quote = !quote; else if (ch === ',' && !quote) { cells.push(value); value = ''; } else value += ch; } cells.push(value); rows.push(cells); }
-  const headers = rows.shift().map(x => x.trim().toLowerCase());
-  return rows.map(cells => Object.fromEntries(headers.map((header,i) => [header,cells[i] || '']))).map(row => normalizeImported({ title: row.title || row['活動'] || row.summary, category: row.category || row['類別'], start: row.start || `${row.date || row['日期']}T${row.starttime || row['開始'] || '09:00'}`, end: row.end || `${row.date || row['日期']}T${row.endtime || row['結束'] || '10:00'}`, notes: row.notes || row['備註'] })).filter(row => row.title && row.start && row.end);
 }
 
 function parseICS(text) {
@@ -405,45 +387,46 @@ function parseICS(text) {
 }
 
 async function handleImportFile(file) {
+  const status = $('#import-status');
+  if (status) status.textContent = `正在讀取 ${file.name}…`;
   try {
-    const text = await file.text(); let parsed; pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] };
-    if (file.name.endsWith('.json')) {
+    const text = typeof file.text === 'function' ? await file.text() : await new Promise((resolve, reject) => {
+      const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || '')); reader.onerror = () => reject(reader.error || new Error('檔案讀取失敗')); reader.readAsText(file);
+    });
+    let parsed; pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] };
+    const filename = file.name.toLowerCase();
+    if (filename.endsWith('.json')) {
       const raw = JSON.parse(text);
-      if (raw.schemaVersion === 2 && Array.isArray(raw.events)) {
+      if (raw && typeof raw === 'object' && !Array.isArray(raw) && Array.isArray(raw.events)) {
         parsed = raw.events.map(event => normalizeEvent(event));
-        pendingImportExtras = { tasks: raw.tasks || [], actuals: raw.actuals || [], reviews: raw.reviews || [], goals: raw.goals || [] };
+        pendingImportExtras = {
+          tasks: Array.isArray(raw.tasks) ? raw.tasks : [], actuals: Array.isArray(raw.actuals) ? raw.actuals : [],
+          reviews: Array.isArray(raw.reviews) ? raw.reviews : [], goals: Array.isArray(raw.goals) ? raw.goals : []
+        };
       }
-      else if (Array.isArray(raw.events)) parsed = raw.events.map(event => normalizeEvent(event));
-      else if (Array.isArray(raw.tasks)) { const migrated = migrateLegacyState(raw); parsed = migrated.events; pendingImportExtras = { tasks: migrated.tasks, actuals: migrated.actuals, reviews: migrated.reviews, goals: migrated.goals }; }
+      else if (raw && Array.isArray(raw.tasks)) { const migrated = migrateLegacyState(raw); parsed = migrated.events; pendingImportExtras = { tasks: migrated.tasks, actuals: migrated.actuals, reviews: migrated.reviews, goals: migrated.goals }; }
       else if (Array.isArray(raw)) parsed = raw.map(row => normalizeEvent(row));
       else throw new Error('JSON 格式中找不到活動資料');
-    } else if (file.name.endsWith('.ics')) parsed = parseICS(text);
-    else if (file.name.endsWith('.csv')) parsed = parseCSV(text);
+    } else if (filename.endsWith('.ics')) parsed = parseICS(text);
+    else if (filename.endsWith('.csv')) parsed = parseCSV(text);
     else throw new Error('目前只接受 JSON、CSV 或 ICS');
     if (!parsed.length && !pendingImportExtras.tasks.length && !pendingImportExtras.actuals.length && !pendingImportExtras.reviews.length && !pendingImportExtras.goals.length) throw new Error('檔案中沒有可匯入的資料');
     openImportPreview(file, parsed);
-  } catch (error) { notify(`匯入失敗：${error.message}`); }
+    if (status) status.textContent = `已讀取 ${file.name}，請檢查預覽後確認。`;
+  } catch (error) {
+    pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] };
+    if (status) status.textContent = `匯入失敗：${error.message}`;
+    notify(`匯入失敗：${error.message}`);
+  }
 }
 
 function applyImport() {
   const wrapper = $('#overlay-root'), decisions = JSON.parse(wrapper.dataset.importRows || '[]');
-  change(store => {
-    for (const row of decisions) {
-      if (row.decision === 'skip') continue;
-      const duplicate = findDuplicate(row, store);
-      const imported = normalizeImported(row);
-      if (row.decision === 'replace' && duplicate) store.events = store.events.map(event => event.id === duplicate.id ? { ...imported, id: event.id } : event);
-      else if (!duplicate) store.events.push(imported);
-    }
-    const appendNewIds = (target, incoming) => {
-      const known = new Set(target.map(item => item.id));
-      target.push(...incoming.filter(item => item?.id && !known.has(item.id)));
-    };
-    appendNewIds(store.tasks, pendingImportExtras.tasks);
-    appendNewIds(store.actuals, pendingImportExtras.actuals.map(normalizeActual));
-    appendNewIds(store.reviews, pendingImportExtras.reviews);
-    appendNewIds(store.goals, pendingImportExtras.goals);
-  }, '匯入資料已保存');
+  if (!decisions.length && !pendingImportExtras.tasks.length && !pendingImportExtras.actuals.length && !pendingImportExtras.reviews.length && !pendingImportExtras.goals.length) return notify('沒有可匯入的資料');
+  let summary;
+  change(store => { summary = mergeImportBatch(store, decisions, pendingImportExtras); }, '匯入資料已保存');
+  const total = summary.addedEvents + summary.replacedEvents + summary.addedTasks + summary.addedActuals + summary.addedReviews + summary.addedGoals;
+  notify(`匯入完成：${total} 筆資料已新增或更新`);
   pendingImportExtras = { tasks: [], actuals: [], reviews: [], goals: [] };
   wrapper.innerHTML = '';
 }
@@ -466,9 +449,15 @@ function attachGlobalHandlers() {
     if (target.matches('[data-date]') && !target.dataset.action) { selectedDate = target.dataset.date; if (window.matchMedia('(max-width: 700px)').matches) viewMode = 'day'; render(); return; }
     const action = target.dataset.action, id = target.dataset.id;
     if (!action) return;
-    if (action === 'prev' || action === 'next') { const amount = viewMode === 'day' ? 1 : viewMode === 'month' ? 30 : 7; selectedDate = addDays(selectedDate, amount * (action === 'prev' ? -1 : 1)); render(); }
+    if (action === 'prev' || action === 'next') {
+      const direction = action === 'prev' ? -1 : 1;
+      if (viewMode === 'month') { const date = parseDate(selectedDate); date.setDate(1); date.setMonth(date.getMonth() + direction); selectedDate = toISODate(date); }
+      else selectedDate = addDays(selectedDate, (viewMode === 'day' ? 1 : 7) * direction);
+      render();
+    }
     if (action === 'today') { selectedDate = localToday(); render(); }
-    if (action === 'mini-prev' || action === 'mini-next') { const d=parseDate(selectedDate); d.setMonth(d.getMonth()+(action==='mini-prev'?-1:1)); selectedDate=toISODate(d); render(); }
+    if (action === 'choose-import-file') $('#import-file')?.click();
+    if (action === 'mini-prev' || action === 'mini-next') { const d=parseDate(selectedDate); d.setDate(1); d.setMonth(d.getMonth()+(action==='mini-prev'?-1:1)); selectedDate=toISODate(d); render(); }
     if (action === 'new-task') openEventDialog();
     if (action === 'new-event') openEventDialog({ date: selectedDate });
     if (action === 'new-at') openEventDialog({ date: target.dataset.date, time: target.dataset.time });
@@ -496,7 +485,7 @@ function attachGlobalHandlers() {
       const item=state.events.find(x=>x.id===id); if(!item)return;
       const scope = item.seriesId ? prompt('輸入 1 刪除這次、2 刪除這次及之後、3 刪除整個系列', '1') : '1';
       if (!scope || !confirm('確認刪除？此操作可按復原。')) return;
-      change(store=>{ store.events=store.events.filter(e=>e.id!==id && !(item.seriesId&&e.seriesId===item.seriesId&&(scope==='3'||scope==='2'&&e.start>=item.start))); store.actuals=store.actuals.filter(a=>a.eventId!==id); },'行程已刪除'); selectedEventId=null;
+      change(store=>{ const removedIds=new Set(store.events.filter(e=>e.id===id || item.seriesId&&e.seriesId===item.seriesId&&(scope==='3'||scope==='2'&&e.start>=item.start)).map(e=>e.id));store.events=store.events.filter(e=>!removedIds.has(e.id));store.actuals=store.actuals.filter(a=>!removedIds.has(a.eventId));store.tasks=store.tasks.map(task=>removedIds.has(task.eventId)?{...task,eventId:null}:task); },'行程已刪除'); selectedEventId=null;
     }
     if (action === 'edit-series') { const item=state.events.find(x=>x.id===id); if(item)openEventDialog({event:item}); }
   });
@@ -507,8 +496,8 @@ function attachGlobalHandlers() {
   document.addEventListener('change', event => {
     const target=event.target;
     if(target.id==='category-filter'){filterCategory=target.value;render();}
-    if(target.id==='event-status'&&selectedEventId){const value=target.value;change(store=>{const item=store.events.find(e=>e.id===selectedEventId);if(item)item.status=value;},'狀態已更新');}
-    if(target.id==='import-file'&&target.files?.[0])handleImportFile(target.files[0]);
+    if(target.id==='event-status'&&selectedEventId){const value=target.value;change(store=>{const item=store.events.find(e=>e.id===selectedEventId);if(item)item.status=value;const task=store.tasks.find(entry=>entry.eventId===selectedEventId);if(task)task.status=value;},'狀態已更新');}
+    if(target.id==='import-file'&&target.files?.[0]){const file=target.files[0];target.value='';handleImportFile(file);}
     if(target.id==='theme-setting'){change(store=>{store.settings.theme=target.value;},'介面模式已更新');}
     if(target.id==='palette-setting'){change(store=>{store.settings.palette=target.value;},'配色已更新');}
     if(target.id==='default-block'||target.id==='long-block'||target.id==='short-gap'){const key=target.id==='default-block'?'defaultBlockMinutes':target.id==='long-block'?'longBlockMinutes':'shortGapMaxMinutes';change(store=>{store.settings[key]=Number(target.value)||30;},'門檻已保存');}

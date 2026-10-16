@@ -31,6 +31,14 @@ export const durationMinutes = (start, end) => {
   const s = minutesOf(start), e = minutesOf(end);
   return e > s ? e - s : e + 1440 - s;
 };
+export const normalizeEndDateTime = (start, end) => {
+  if (!start || !end) return end;
+  const startDate = start.slice(0, 10), endDate = end.slice(0, 10);
+  if (startDate === endDate && minutesOf(end.slice(11, 16)) <= minutesOf(start.slice(11, 16))) {
+    return `${addDays(startDate, 1)}T${end.slice(11, 16)}`;
+  }
+  return end;
+};
 export const categoryLabel = id => CATEGORIES.find(x => x.id === id)?.label || '其他';
 export const categoryColor = id => CATEGORIES.find(x => x.id === id)?.color || '#9b7653';
 

@@ -1,8 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeEvent } from '../src/model.js';
+import { readFileSync } from 'node:fs';
+import { emptyState, normalizeEndDateTime, normalizeEvent } from '../src/model.js';
 import { createRecurringEvents, findConflicts, splitAcrossDates, suggestSlots } from '../src/scheduler.js';
 import { estimateError, summarizePeriod } from '../src/analytics.js';
+import { mergeImportBatch, parseCSV } from '../src/importer.js';
+
+const importFixture = JSON.parse(readFileSync(new URL('../sample-data/chrono-planner-test-data.json', import.meta.url), 'utf8'));
 
 test('cross-midnight activity stays one record and splits minutes by date', () => {
   const event = normalizeEvent({ title: '睡眠', start: '2026-10-16T23:30', end: '2026-10-17T01:00' });
@@ -13,6 +17,11 @@ test('same-day earlier end is interpreted as crossing midnight', () => {
   const event = normalizeEvent({ title: '跨夜', start: '2026-10-16T23:00', end: '2026-10-16T00:30' });
   assert.equal(splitAcrossDates(event).reduce((n, x) => n + x.minutes, 0), 90);
   assert.equal(splitAcrossDates(event)[1].date, '2026-10-17');
+});
+
+test('form end time on the same date is advanced to the next date when it crosses midnight', () => {
+  assert.equal(normalizeEndDateTime('2026-10-16T23:30', '2026-10-16T00:30'), '2026-10-17T00:30');
+  assert.equal(normalizeEndDateTime('2026-10-16T21:30', '2026-10-16T22:00'), '2026-10-16T22:00');
 });
 
 test('back-to-back events do not count as overlap, intersecting events do', () => {
@@ -56,4 +65,52 @@ test('estimate error is paired only when an actual record links to a planned eve
   assert.equal(result.n, 1);
   assert.equal(result.meanAbsoluteError, 15);
   assert.equal(result.bias, -15);
+});
+
+test('sample JSON import preserves linked tasks, events, and actual records', () => {
+  const state = emptyState();
+  const rows = importFixture.events.map(event => ({ ...normalizeEvent(event), decision: 'add' }));
+  const summary = mergeImportBatch(state, rows, importFixture);
+
+  assert.deepEqual(summary, { addedEvents: 4, replacedEvents: 0, addedTasks: 2, addedActuals: 1, addedReviews: 1, addedGoals: 1 });
+  assert.equal(state.tasks.find(task => task.id === 'sample-task-linked').eventId, 'sample-event-focus');
+  assert.equal(state.events.find(event => event.id === 'sample-event-focus').taskId, 'sample-task-linked');
+  assert.equal(state.actuals[0].eventId, 'sample-event-leisure');
+  assert.equal(state.events.find(event => event.id === 'sample-event-sleep').status, 'todo');
+});
+
+test('reimporting the same sample skips duplicate content without creating broken links', () => {
+  const state = emptyState();
+  const rows = importFixture.events.map(event => ({ ...normalizeEvent(event), decision: 'add' }));
+  mergeImportBatch(state, rows, importFixture);
+  const duplicateRows = importFixture.events.map(event => ({ ...normalizeEvent(event), decision: 'skip' }));
+  const summary = mergeImportBatch(state, duplicateRows, importFixture);
+
+  assert.equal(summary.addedEvents, 0);
+  assert.equal(summary.addedTasks, 0);
+  assert.equal(summary.addedActuals, 0);
+  assert.equal(state.events.length, 4);
+  assert.equal(state.actuals[0].eventId, state.events.find(event => event.title === '休閒閱讀').id);
+});
+
+test('choosing add for a duplicate creates a new event with a unique ID', () => {
+  const state = emptyState();
+  const first = normalizeEvent(importFixture.events[0]);
+  state.events.push(first);
+  const rows = [{ ...first, decision: 'add' }];
+  mergeImportBatch(state, rows);
+  assert.equal(state.events.length, 2);
+  assert.notEqual(state.events[0].id, state.events[1].id);
+});
+
+test('CSV export headings round-trip Chinese titles, categories, full dates, and multiline notes', () => {
+  const csv = '\ufeff"日期","標題","類別","開始日期時間","結束日期時間","狀態","期限","期限種類","備註"\r\n'
+    + '"2026-10-20","跨夜睡眠","睡眠","2026-10-20T23:00","2026-10-21T07:00","已完成","","","第一行\n第二行,含逗號""與引號"""\r\n';
+  const [event] = parseCSV(csv);
+  assert.equal(event.title, '跨夜睡眠');
+  assert.equal(event.category, 'sleep');
+  assert.equal(event.start, '2026-10-20T23:00');
+  assert.equal(event.end, '2026-10-21T07:00');
+  assert.equal(event.status, 'done');
+  assert.equal(event.notes, '第一行\n第二行,含逗號"與引號"');
 });
