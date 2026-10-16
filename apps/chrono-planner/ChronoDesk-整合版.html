@@ -240,10 +240,10 @@
       function exportICS(){const fmt=(d,t)=>`${d.replaceAll('-','')}T${t.replace(':','')}00`;const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Chrono Desk//Time Manager//ZH-TW'];store.tasks.forEach(t=>lines.push('BEGIN:VEVENT',`UID:${t.id}@chronodesk`,`DTSTART:${fmt(t.date,t.startTime)}`,`DTEND:${fmt(t.date,t.endTime)}`,`SUMMARY:${t.title.replace(/[,;\\]/g,' ')}`,`DESCRIPTION:${t.project} / ${t.category}`,`STATUS:${t.status==='done'?'CONFIRMED':'TENTATIVE'}`,'END:VEVENT'));lines.push('END:VCALENDAR');downloadBlob(new Blob([lines.join('\r\n')],{type:'text/calendar;charset=utf-8'}),'chronodesk.ics');notify('iCalendar 已下載')}
       async function importICS(e){
         const f=e.target.files?.[0];if(!f)return;
-        try{const parsed=parseImportedICS(await f.text(),f.name);let added=0,skipped=parsed.skipped.length;
-          for(const task of parsed.tasks){if(store.tasks.some(t=>t.title===task.title&&t.date===task.date&&t.startTime===task.startTime)){skipped++;continue}store.tasks.push(task);added++}
+        try{const parsed=parseImportedICS(await f.text(),f.name);let added=0,skipped=parsed.skipped.length;const addedTasks=[];
+          for(const task of parsed.tasks){if(store.tasks.some(t=>t.title===task.title&&t.date===task.date&&t.startTime===task.startTime)){skipped++;continue}store.tasks.push(task);addedTasks.push(task);added++}
           if(!added)throw Error(`沒有新增行程（略過 ${skipped} 筆，請檢查 ICS 日期格式或重複資料）`);
-          const dates=store.tasks.filter(t=>t.isImported).map(t=>t.date).sort();calendarMonth.value=new Date(Number(dates[0].slice(0,4)),Number(dates[0].slice(5,7))-1,1,12);calendarSelectedDate.value=dates[0];selectedDate.value=dates[0];importReport.value=`ICS 匯入完成：新增 ${added} 筆，略過 ${skipped} 筆；已跳至 ${dates[0]}。`;page.value='import_calendar';notify(`ICS 匯入完成：新增 ${added} 筆`)
+          const dates=addedTasks.map(t=>t.date).sort();calendarMonth.value=new Date(Number(dates[0].slice(0,4)),Number(dates[0].slice(5,7))-1,1,12);calendarSelectedDate.value=dates[0];selectedDate.value=dates[0];importReport.value=`ICS 匯入完成：新增 ${added} 筆，略過 ${skipped} 筆；已跳至 ${dates[0]}。`;page.value='import_calendar';notify(`ICS 匯入完成：新增 ${added} 筆`)
         }catch(err){importReport.value=`ICS 匯入失敗：${err.message}`;notify(`ICS 匯入失敗：${err.message}`)}finally{e.target.value=''}
       }
       async function exportPDF(){if(!window.html2pdf){notify('PDF 元件載入失敗，請檢查網路後重試');return}const el=document.getElementById('dashboard-report');if(!el){notify('請先開啟戰情室');return}await html2pdf().set({margin:8,filename:'chrono-desk-report.pdf',image:{type:'jpeg',quality:.95},html2canvas:{scale:1.5,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'landscape'}}).from(el).save();notify('PDF 報表已下載')}
